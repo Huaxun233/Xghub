@@ -8,8 +8,22 @@ const { version } = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 ) as { version: string };
 
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
+export default defineConfig(({ mode }) => ({
+  base: mode === "web" ? "./" : "/",
+  plugins: [
+    react(),
+    tailwindcss(),
+    {
+      name: "include-license",
+      generateBundle() {
+        this.emitFile({
+          type: "asset",
+          fileName: "LICENSE.txt",
+          source: readFileSync(new URL("./LICENSE", import.meta.url), "utf8"),
+        });
+      },
+    },
+  ],
   clearScreen: false,
   // 版本号只维护 package.json（CI 会按 tag 改写它），界面里的版本由这里注入，避免写死后漂移
   define: {
@@ -28,4 +42,4 @@ export default defineConfig({
     minify: "esbuild",
     sourcemap: false,
   },
-});
+}));

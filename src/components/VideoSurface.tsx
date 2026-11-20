@@ -19,6 +19,7 @@ export type VideoHandle = {
 
 type Props = {
   src: string;
+  direct?: "file" | "hls";
   poster?: string;
   autoPlay?: boolean;
   active?: boolean;
@@ -48,7 +49,7 @@ type Props = {
 
 /** 只负责「播」：hls.js + video 元素，控制条由外层渲染。 */
 const VideoSurface = forwardRef<VideoHandle, Props>(function VideoSurface(
-  { src, poster, autoPlay = true, active = true, diagnosticContext = {}, muted = false, loop = false, fit = "contain",
+  { src, direct, poster, autoPlay = true, active = true, diagnosticContext = {}, muted = false, loop = false, fit = "contain",
     scale = 1, panX = 0, panY = 0, isGesturing = false,
     volume = 1, rate = 1,
     onTime, onDuration, onSize, onPlaying, onPause, onWaiting, onEnded, onError, onClick, className = "" },
@@ -164,9 +165,8 @@ const VideoSurface = forwardRef<VideoHandle, Props>(function VideoSurface(
     }
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
 
-    const proxied = isLocalMedia(src);
-    const url = proxied ? src : playlist(src);
-    const useHls = !url.includes("/seg?u=");
+    const url = direct || isLocalMedia(src) ? src : playlist(src);
+    const useHls = direct ? direct === "hls" : !url.includes("/seg?u=");
     const isIos = platform === "ios";
     trace("source.load", { engine: useHls && Hls.isSupported() ? "hls.js" : "native", auto_play: autoPlay, resource: mediaResource(src) });
 
@@ -288,7 +288,7 @@ const VideoSurface = forwardRef<VideoHandle, Props>(function VideoSurface(
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [src, direct]);
 
   useEffect(() => { if (videoRef.current) videoRef.current.muted = muted; }, [muted]);
   useEffect(() => { if (videoRef.current) videoRef.current.volume = volume; }, [volume]);
@@ -329,6 +329,7 @@ const VideoSurface = forwardRef<VideoHandle, Props>(function VideoSurface(
       <video
         ref={videoRef}
         playsInline
+        controls={!!direct}
         webkit-playsinline="true"
         preload="auto"
         muted={muted}
@@ -360,7 +361,7 @@ const VideoSurface = forwardRef<VideoHandle, Props>(function VideoSurface(
           }
           // 借鉴 stclock1988/hghub-ios：部分 HLS 流容器标称时长比最后一个分片略长 0.5~1.2s，
           // 接近片尾时提前复位准备，若卡在片尾则自动触发连播
-          if (!loop && !nearEndFiredRef.current && activity.isActive() && v.duration > 5 && v.currentTime >= v.duration - 0.35) {
+          if (!direct && !loop && !nearEndFiredRef.current && activity.isActive() && v.duration > 5 && v.currentTime >= v.duration - 0.35) {
             nearEndFiredRef.current = true;
             onEnded?.();
           }
@@ -374,7 +375,7 @@ const VideoSurface = forwardRef<VideoHandle, Props>(function VideoSurface(
         onPause={() => onPause?.()}
         onWaiting={(e) => {
           const v = e.target as HTMLVideoElement;
-          if (!loop && !nearEndFiredRef.current && activity.isActive() && v.duration > 5 && v.currentTime >= v.duration - 1.5) {
+          if (!direct && !loop && !nearEndFiredRef.current && activity.isActive() && v.duration > 5 && v.currentTime >= v.duration - 1.5) {
             nearEndFiredRef.current = true;
             onEnded?.();
             return;
@@ -388,6 +389,7 @@ const VideoSurface = forwardRef<VideoHandle, Props>(function VideoSurface(
           if (activity.isActive()) onPlaying?.();
         }}
         onSeeking={() => onWaiting?.()}
+        onError={() => { if (direct && activity.isActive()) onError?.("media"); }}
         onSeeked={() => {
           const v = videoRef.current;
           if (v && !v.paused && activity.isActive()) onPlaying?.();

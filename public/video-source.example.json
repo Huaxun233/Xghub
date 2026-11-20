@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "id": "example",
+  "name": "示例站源",
+  "series": [
+    {
+      "id": "flower",
+      "title": "花朵",
+      "category": "示例",
+      "description": "MDN 的 CC0 视频示例。",
+      "episodes": [
+        {
+          "id": "ep-1",
+          "title": "第 1 集",
+          "format": "file",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import Search, { RankPage } from "./pages/Search";
 import Category, { ChannelPage } from "./pages/Category";
 import Profile from "./pages/Profile";
 import SettingsPage from "./pages/Settings";
+import Videos from "./pages/Videos";
 import Feed from "./components/Feed";
 import { PostsPage, PostDetail } from "./pages/Posts";
 import LoginModal from "./components/LoginModal";
@@ -24,6 +25,7 @@ function TabBar() {
     { k: "home", label: "首页" },
     { k: "search", label: "搜索" },
     { k: "category", label: "分类" },
+    { k: "videos", label: "视频库" },
     { k: "profile", label: "我的" },
   ];
   /* 细瘦纯文字分栏：只有选中项高亮，没有指示点。
@@ -132,6 +134,9 @@ function AppBody() {
         <div className={vis("search")}><Search active={pageActive && tab === "search"} wide={wide} /></div>
         <div className={vis("category")}><Category wide={wide} active={pageActive && tab === "category"} /></div>
         <div className={vis("profile")}><Profile wide={wide} /></div>
+        <div className={vis("videos")}>
+          <Videos active={pageActive && tab === "videos"} bottomInset={bottomInset} />
+        </div>
 
         {stack.map((p, i) => (
           <div key={p.key} className="absolute inset-0 z-30 bg-bg a-page-in" style={{ boxShadow: "-18px 0 40px rgba(0,0,0,.5)" }}>
@@ -204,6 +209,7 @@ function ShellInner({ collapsed, theater }: { collapsed: boolean; theater: boole
         <div className={vis("search")}><Search active={pageActive && tab === "search"} wide={wide} /></div>
         <div className={vis("category")}><Category wide={wide} active={pageActive && tab === "category"} /></div>
         <div className={vis("profile")}><Profile wide={wide} /></div>
+        <div className={vis("videos")}><Videos active={pageActive && tab === "videos"} /></div>
         {stack.map((p, i) => (
           <div key={p.key} className="absolute inset-0 z-30 bg-bg win-page-in" style={{ boxShadow: "-18px 0 40px rgba(0,0,0,.5)" }}>
             <StackPage page={p} onBack={pop} wide={wide} top={i === stack.length - 1} bottomInset={14} />

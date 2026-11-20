@@ -71,6 +71,13 @@ pnpm build           # 类型检查与前端构建
 - 依赖安装脚本的允许列表见 `package.json` 与 `pnpm-workspace.yaml`。
 - 内容处理、网络安全边界与本地回归说明见[客户端内容与网络安全](docs/security.md)。
 
+## 视频库与跨平台出包
+
+- Windows 和 Android 在主导航打开 **视频库**。可以直接添加 HTTPS 视频链接，也可以导入 [JSON 站源示例](public/video-source.example.json) 的同格式文件。站源按 ID 更新，保留 ID 可以续用追剧和观看记录。记录保存在当前设备或浏览器。
+- 视频库参考小果影视的站源、追剧和续播流程独立实现。站源采用本项目的 JSON 格式，播放使用 MP4 或 HLS 直链。HLS 站源须允许播放器跨域读取播放清单和分片。
+- 在 GitHub Actions 手动运行 **Release**，从运行页的 Artifacts 下载 Windows x64 安装包、各 Android 架构的 APK 和网页 ZIP。缺少正式 Android 签名时，手动构建会使用该次运行独有的测试证书，安装后不可用其他证书签名的 APK 直接覆盖升级。
+- 本地运行 `pnpm build:web` 可以生成 `dist-web/`。将目录放到任意静态 HTTP 服务下访问。网页端提供视频库，原应用的短剧首页、账号及线路等功能使用 Tauri 原生接口。
+
 ## 许可证
 
 当前版本适用 [PolyForm Noncommercial License 1.0.0](LICENSE)。本页说明不替代许可证全文，也不另行增加用户或开发者行为规范。
