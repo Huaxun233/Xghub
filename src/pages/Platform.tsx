@@ -172,7 +172,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
       {!token ? (
         <form onSubmit={connect} className={panel + " max-w-md"}>
           <label className="block space-y-1 text-sm"><span>管理密钥</span>
-            <input className={field} type="password" required minLength={32} maxLength={128} autoComplete="off"
+            <input className={field} type="password" required minLength={20} maxLength={128} autoComplete="off"
               value={draftToken} onChange={e => setDraftToken(e.target.value)} />
           </label>
           <button className={primary} disabled={busy}>解锁后台</button>

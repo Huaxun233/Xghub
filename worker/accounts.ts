@@ -12,7 +12,7 @@ async function digest(value: string) {
 }
 
 export async function requireAdmin(request: Request, env: Env) {
-  if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.length < 32) {
+  if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.length < 20) {
     throw new HttpError(503, "站点管理员尚未配置管理密钥");
   }
   await limit(env, "admin:" + clientAddress(request));
