@@ -73,7 +73,8 @@ export default {
       return await api(request, env, url);
     } catch (error) {
       if (error instanceof HttpError) return json({ error: error.message }, error.status);
-      console.error("API request failed", request.method, url.pathname);
+      console.error("API request failed", request.method, url.pathname,
+        error instanceof Error ? error.name + ": " + error.message : "Unknown error");
       return json({ error: "服务暂不可用，请稍后再试" }, 500);
     }
   },
