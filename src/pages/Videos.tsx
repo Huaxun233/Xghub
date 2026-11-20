@@ -74,7 +74,7 @@ function Playback({ episode, start, save }: {
 }
 
 type PlatformCatalog = {
-  section: "home" | "library";
+  section: "home" | "library" | "search" | "personal";
   sources: Source[];
   loading: boolean;
   error: string;
@@ -86,7 +86,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
 }) {
   const [library, setLibrary] = useState(readLibrary);
   const latest = useRef(library);
-  const [view, setView] = useState<View>("all");
+  const [view, setView] = useState<View>(platform?.section === "personal" ? "history" : "all");
   const [sourceId, setSourceId] = useState("");
   const [category, setCategory] = useState("");
   const [query, setQuery] = useState("");
@@ -199,7 +199,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
       style={{ paddingTop: "calc(var(--sat, 0px) + 20px)", paddingBottom: "calc(var(--sab, 0px) + " + (bottomInset + 24) + "px)" }}>
       <div className="mx-auto max-w-5xl space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold">{platform?.section === "home" ? "首页" : "视频库"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{platform?.section === "home" ? "首页" : platform?.section === "library" ? "分类" : platform?.section === "search" ? "搜索" : platform?.section === "personal" ? "我的片单" : "视频库"}</h1>
           {!platform && <label className={button + " relative cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
             导入站源
             <input className="sr-only" aria-label="导入站源" type="file" accept=".json,application/json"
@@ -224,7 +224,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
         </div>}
 
         {platform?.section === "home" && !selected && entries[0] && (
-          <section className="flex min-h-52 flex-col justify-end gap-3 rounded-(--r-md) border border-s3 bg-linear-to-br from-pc to-s1 p-5 sm:p-8">
+          <section className="flex min-h-64 flex-col justify-end gap-3 rounded-3xl border border-s3 bg-linear-to-br from-pc via-s2 to-s1 p-6 shadow-xl sm:min-h-80 sm:p-10">
             <div className="text-sm text-mut">最新上架</div>
             <h2 className="max-w-xl break-words text-3xl font-bold">{entries[0].series.title}</h2>
             {entries[0].series.description && <p className="max-w-xl break-words text-sm text-mut">{entries[0].series.description}</p>}
@@ -294,21 +294,21 @@ export default function Videos({ active, bottomInset = 0, platform }: {
         </div>
 
         {visible.length ? (
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {visible.map(entry => {
               const followed = library.followed.includes(entry.key);
               const progress = library.progress[entry.key];
-              return <li key={entry.key} className="flex items-center gap-2 rounded-(--r-md) bg-s1 p-2">
-                <button className="flex min-w-0 flex-1 items-center gap-3 p-2 text-left" onClick={() => select(entry)}>
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-pc text-primary">
-                    {progress ? <IHist size={18} /> : <IPlayF size={18} />}
+              return <li key={entry.key} className="relative min-w-0 overflow-hidden rounded-2xl border border-s3 bg-s1 transition hover:border-primary">
+                <button className="block w-full min-w-0 text-left" onClick={() => select(entry)}>
+                  <span className="grid aspect-video place-items-center bg-linear-to-br from-pc to-s2 text-primary">
+                    {progress ? <IHist size={26} /> : <IPlayF size={26} />}
                   </span>
-                  <span className="min-w-0">
+                  <span className="block min-w-0 p-3">
                     <span className="block truncate font-semibold">{entry.series.title}</span>
                     <span className="block truncate text-xs text-mut">{entry.source.name} · {entry.series.category} · {entry.series.episodes.length} 集</span>
                   </span>
                 </button>
-                <button className={button} aria-label={(followed ? "取消追剧 " : "追剧 ") + entry.series.title}
+                <button className={button + " absolute right-2 top-2"} aria-label={(followed ? "取消追剧 " : "追剧 ") + entry.series.title}
                   aria-pressed={followed} onClick={() => toggleFollow(entry.key)}>
                   {followed ? <IStarF size={17} className="text-amber" /> : <IStar size={17} />}
                 </button>
