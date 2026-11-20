@@ -1,5 +1,6 @@
 import { MAX_SOURCE_BYTES, parseSource } from "../src/videoCatalog";
 import { account, requireAdmin } from "./accounts";
+import { invites } from "./invites";
 import { HttpError, json, jsonHeaders, readJson, type Env } from "./http";
 export { PasswordHasher } from "./passwordHasher";
 
@@ -25,13 +26,15 @@ async function api(request: Request, env: Env, url: URL) {
 
   const action = /^\/api\/account\/(me|register|login|logout)$/.exec(pathname);
   if (action) return account(request, env, action[1]);
+  const inviteRoute = /^\/api\/admin\/invites(?:\/([A-Z0-9]{16}))?$/.exec(pathname);
+  if (inviteRoute) return invites(request, env, inviteRoute[1]);
 
   if (pathname === "/api/admin/accounts" && method === "GET") {
     await requireAdmin(request, env);
     const before = url.searchParams.get("before");
     if (before !== null && (!/^[1-9]\d{0,14}$/.test(before))) throw new HttpError(400, "分页参数无效");
     const { results } = await env.DB.prepare(
-      "SELECT id, username, created_at FROM accounts WHERE id < ? ORDER BY id DESC LIMIT ?",
+      "SELECT id, username, created_at, invite_code FROM accounts WHERE id < ? ORDER BY id DESC LIMIT ?",
     ).bind(before ? Number(before) : Number.MAX_SAFE_INTEGER, ACCOUNT_PAGE_SIZE + 1)
       .all<{ id: number; username: string; created_at: number }>();
     const accounts = results.slice(0, ACCOUNT_PAGE_SIZE);

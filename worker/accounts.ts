@@ -51,7 +51,7 @@ export async function account(request: Request, env: Env, action: string) {
   }
 
   await limit(env, "auth:" + clientAddress(request));
-  const body = await readJson(request, 4096) as { username?: unknown; password?: unknown } | null;
+  const body = await readJson(request, 4096) as { username?: unknown; password?: unknown; inviteCode?: unknown } | null;
   const username = typeof body?.username === "string" ? body.username.trim() : "";
   const password = body?.password;
   if (!/^[\p{L}\p{N}_-]{3,24}$/u.test(username) ||
@@ -64,12 +64,20 @@ export async function account(request: Request, env: Env, action: string) {
   const key = username.toLowerCase();
   await limit(env, "username:" + key);
   if (action === "register") {
+    const invite = typeof body?.inviteCode === "string" ? body.inviteCode.trim().toUpperCase() : "";
+    if (!/^[A-Z0-9]{16}$/.test(invite)) throw new HttpError(400, "请输入有效的邀请码");
     const salt = random(16);
     const hash = await passwordHash(env, password, salt);
     const result = await env.DB.prepare(
-      "INSERT INTO accounts (username, salt, password_hash, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(username) DO NOTHING",
-    ).bind(key, salt, hash, Date.now()).run();
-    if (!result.meta.changes) throw new HttpError(409, "此用户名已被使用");
+      "INSERT INTO accounts (username, salt, password_hash, created_at, invite_code) " +
+      "SELECT ?, ?, ?, ?, code FROM invites WHERE code = ? AND active = 1 AND used < max_uses " +
+      "ON CONFLICT(username) DO NOTHING",
+    ).bind(key, salt, hash, Date.now(), invite).run();
+    if (!result.meta.changes) {
+      const existing = await env.DB.prepare("SELECT id FROM accounts WHERE username = ?").bind(key).first();
+      if (existing) throw new HttpError(409, "此用户名已被使用");
+      throw new HttpError(400, "邀请码无效、已停用或已用完");
+    }
     return json({ registered: true }, 201);
   }
 

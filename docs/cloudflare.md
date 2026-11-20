@@ -4,6 +4,10 @@ Worker 同时提供网页与 API。D1 保存公开站源、本站账号和登录
 
 网页首页展示后台发布的内容。视频库可按名称、分类或站源查找视频，支持选集、追剧和续播。追剧与观看进度保存在当前浏览器。视频由原视频地址提供，数据库存储目录和播放链接。发布前确认视频允许公开播放，HLS 源须允许网页跨域读取清单及分片。
 
+访客第一次注册时，需要输入管理员生成的邀请码。在后台的 **邀请码** 板块设置可使用次数、点击 **生成邀请码**，然后复制给受邀用户。管理员可以停用或恢复邀请码。**注册账号** 会显示每个用户使用的邀请码，存量账号仍可照常登录。
+
+New registrations require an invitation code. Open **Invitations** in the admin page, choose the usage limit, generate a code, and share it with the invitee. Codes can be disabled or re-enabled. The account list shows the code used for each new registration. Existing users can still sign in.
+
 ## 本地预览
 
 使用 Node.js 22 或 24 和 pnpm 10。运行以下命令安装依赖、生成网页和初始化本地数据库。
@@ -47,7 +51,7 @@ pnpm worker:dev
    pnpm exec wrangler secret put PASSWORD_PEPPER
    ```
 
-6. 打开部署命令返回的 HTTPS 地址，查看 `/api/health` 是否返回 `{"ok":true}`。在网页中注册一个测试账号，进入后台确认名单能看到该账号，再发布站源并用另一个浏览器会话验证访客端。
+6. 打开部署命令返回的 HTTPS 地址，查看 `/api/health` 是否返回 `{"ok":true}`。从后台生成一个测试邀请码，用它注册账号并核对注册名单，再发布站源并用另一个浏览器会话验证访客端。
 
 以后更新按顺序执行数据库迁移和 `pnpm worker:deploy`。只想更新视频时，直接在后台按站源 ID 编辑发布。
 

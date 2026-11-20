@@ -18,47 +18,22 @@ import ResizeHandles from "./components/ResizeHandles";
 import { tracePlayback } from "./playbackDiagnostics";
 import { IGrid, IGridF, IHome, IHomeF, ISearch, IUser, IUserF, Logo } from "./icons";
 
-/* ============ 底部标签栏（Android）—— 细瘦纯文字、低侵入 ============ */
-function TabBar() {
-  const { tab, setTab, theme } = useStore();
-  const items: { k: Tab; label: string }[] = [
+function MobileRail() {
+  const { tab, setTab, theme, setTheme } = useStore();
+  const items = [
     { k: "home", label: "首页" },
     { k: "search", label: "搜索" },
     { k: "category", label: "分类" },
     { k: "videos", label: "视频库" },
     { k: "profile", label: "我的" },
-  ];
-  /* 细瘦纯文字分栏：只有选中项高亮，没有指示点。
-     首页是沉浸视频 → 底栏压深色；搜索/分类/我的 是浅色内容页 →
-     浅色主题下底栏跟着换成浅色，深色主题保持深色。 */
-  const overVideo = tab === "home";
-  const lightBar = !overVideo && theme === "light";
+  ] as const;
   return (
-    <nav className="hg-tabbar absolute bottom-0 inset-x-0 z-30"
-      style={{
-        paddingBottom: "var(--sab, 0px)",
-        background: lightBar ? "rgba(250, 250, 250, .97)" : overVideo ? "#000000" : "#141414",
-        borderTop: lightBar ? "1px solid rgba(0,0,0,.08)" : overVideo ? "none" : "1px solid rgba(255,255,255,.07)",
-        boxShadow: lightBar ? "0 -2px 14px rgba(0,0,0,.05)" : "none",
-      }}>
-      <div className="h-[40px] flex items-center px-1">
-        {items.map(({ k, label }) => {
-          const on = tab === k;
-          return (
-            <button key={k} onClick={() => setTab(k)} className="flex-1 h-full flex items-center justify-center pressable">
-              <span className="text-[12.5px] leading-none transition-colors duration-200"
-                style={{
-                  fontWeight: on ? 700 : 400,
-                  color: lightBar
-                    ? (on ? "var(--p-primary)" : "rgba(0,0,0,.45)")
-                    : (on ? "#ffffff" : "rgba(255,255,255,.6)"),
-                }}>
-                {label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+    <nav aria-label="主导航" className="flex w-16 shrink-0 flex-col gap-1 overflow-y-auto border-r border-s3 bg-bg px-1"
+      style={{ paddingTop: "var(--sat, 0px)", paddingBottom: "var(--sab, 0px)" }}>
+      {items.map(({ k, label }) => <button key={k} onClick={() => setTab(k)} aria-current={tab === k ? "page" : undefined}
+        className={`rounded-lg py-3 text-sm ${tab === k ? "bg-pc text-on-pc font-semibold" : "text-mut"}`}>{label}</button>)}
+      <button className="mt-auto py-3 text-xs" aria-pressed={theme === "light"}
+        onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? "深色模式" : "浅色模式"}</button>
     </nav>
   );
 }
@@ -120,7 +95,7 @@ function AppBody() {
 
   const vis = (k: Tab) => (tab === k ? "absolute inset-0" : "absolute inset-0 invisible pointer-events-none");
   const pageActive = stack.length === 0 && !loginOpen;
-  const bottomInset = isMobile ? (fs || clean ? 0 : 40) : 14;
+  const bottomInset = isMobile ? 0 : 14;
   /* 栈页（从搜索/分类/我的进入的播放页、图文页）没有底栏，
      底部只让出安全区。之前多留了 20px，视频底边会露出一条
      「底栏」似的窄缝（底部的压暗渐变到不了屏幕最底）。 */
@@ -129,6 +104,7 @@ function AppBody() {
   return (
     <div className={`absolute inset-0 flex bg-canvas plat-${platform}`}>
       {!isMobile && <DesktopRail collapsed={collapsed} />}
+      {isMobile && !fs && !clean && stack.length === 0 && <MobileRail />}
       <div ref={mainRef} className="relative flex-1 min-w-0 overflow-hidden win-main">
         <div className={vis("home")}><Home active={pageActive && tab === "home"} bottomInset={bottomInset} /></div>
         <div className={vis("search")}><Search active={pageActive && tab === "search"} wide={wide} /></div>
@@ -144,7 +120,7 @@ function AppBody() {
           </div>
         ))}
 
-        {isMobile && !fs && !clean && stack.length === 0 && <TabBar />}
+
       </div>
     </div>
   );

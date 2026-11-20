@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Logo } from "../icons";
 import { MAX_SOURCE_BYTES, parseSource, type Source } from "../videoCatalog";
 import Videos from "./Videos";
+import WebTheme from "../components/WebTheme";
 
 const button = "rounded-(--r-ctl) bg-s3 px-3 py-2 text-sm font-medium hover:bg-s4 disabled:opacity-50";
 const primary = "rounded-(--r-ctl) bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:opacity-50";
@@ -9,7 +10,8 @@ const field = "block w-full min-w-0 rounded-(--r-ctl) border border-s4 bg-canvas
 const panel = "space-y-3 rounded-(--r-md) border border-s3 bg-s1 p-4";
 
 type User = { username: string };
-type AccountPage = { accounts: (User & { id: number; created_at: number })[]; next: number | null };
+type AccountPage = { accounts: (User & { id: number; created_at: number; invite_code: string | null })[]; next: number | null };
+type Invite = { code: string; max_uses: number; used: number; active: number };
 type Section = "home" | "library" | "search" | "account" | "admin";
 
 async function api<T>(path: string, options?: { method?: string; body?: unknown; token?: string; signal?: AbortSignal }): Promise<T> {
@@ -33,6 +35,7 @@ function Account({ user, onUser }: { user: User | null; onUser: (user: User | nu
   const [register, setRegister] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -44,7 +47,8 @@ function Account({ user, onUser }: { user: User | null; onUser: (user: User | nu
     setMessage("");
     try {
       if (register) {
-        await api("account/register", { method: "POST", body: { username, password } });
+        await api("account/register", { method: "POST", body: { username, password, inviteCode } });
+        setInviteCode("");
         setRegister(false);
         setMessage("账号已注册，请登录。");
       } else {
@@ -93,7 +97,11 @@ function Account({ user, onUser }: { user: User | null; onUser: (user: User | nu
               type="password" autoComplete={register ? "new-password" : "current-password"}
               required minLength={10} maxLength={128} />
           </label>
-          {register && <p className="text-xs text-mut">用户名 3–24 个字符，密码至少 10 个字符。</p>}
+          {register && <label className="block space-y-1 text-sm"><span>邀请码</span>
+            <input className={field + " font-mono uppercase"} value={inviteCode} onChange={e => setInviteCode(e.target.value)}
+              autoCapitalize="characters" autoComplete="off" spellCheck={false} minLength={16} maxLength={16} required />
+          </label>}
+          {register && <p className="text-xs text-mut">用户名 3–24 个字符，密码至少 10 个字符。注册需要管理员提供的邀请码。</p>}
           <div className="flex flex-wrap gap-2">
             <button className={primary} disabled={busy}>{register ? "注册" : "登录"}</button>
             <button className={button} type="button" disabled={busy} onClick={() => {
@@ -111,6 +119,8 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
   const [token, setToken] = useState("");
   const [input, setInput] = useState("");
   const [page, setPage] = useState<AccountPage>({ accounts: [], next: null });
+  const [inviteList, setInviteList] = useState<Invite[] | null>(null);
+  const [maxUses, setMaxUses] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -164,7 +174,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">管理后台</h1>
         {token && <button className={button} disabled={busy} onClick={() => {
-          setToken(""); setInput(""); setPage({ accounts: [], next: null }); setError(""); setStatus("");
+          setToken(""); setInput(""); setPage({ accounts: [], next: null }); setInviteList(null); setError(""); setStatus("");
         }}>锁定后台</button>}
       </div>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
@@ -179,7 +189,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
         </form>
       ) : (
         <div className="grid items-start gap-4 lg:grid-cols-[3fr_2fr]">
-          <div className={panel}>
+          <div className={panel + " lg:row-span-2"}>
             <h2 className="text-lg font-semibold">站源与剧集</h2>
             {sources.length ? <ul className="divide-y divide-s3">
               {sources.map(source => <li key={source.id} className="flex flex-wrap items-center gap-2 py-2">
@@ -226,6 +236,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
             {page.accounts.length ? <ul className="divide-y divide-s3">
               {page.accounts.map(item => <li key={item.id} className="space-y-0.5 py-2 text-sm">
                 <div className="break-words font-medium">{item.username}</div>
+                <div className="break-all text-xs text-mut">{item.invite_code ? "邀请码 " + item.invite_code : "历史账号 · 无邀请码"}</div>
                 <time className="text-xs text-mut" dateTime={new Date(item.created_at).toISOString()}>
                   {new Date(item.created_at).toLocaleString()}
                 </time>
@@ -233,6 +244,46 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
             </ul> : <p className="text-sm text-mut">暂无注册账号。</p>}
             {page.next && <button className={button} disabled={busy}
               onClick={() => void run(() => readAccounts(token, page.next ?? undefined))}>加载更多</button>}
+          </div>
+          <div className={panel}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold">邀请码</h2>
+              <button className={button} disabled={busy} onClick={() => void run(async () => {
+                setInviteList(await api<Invite[]>("admin/invites", { token }));
+              })}>{inviteList ? "刷新邀请码" : "查看邀请码"}</button>
+            </div>
+            <form className="flex flex-wrap items-end gap-2" onSubmit={event => {
+              event.preventDefault();
+              void run(async () => {
+                const invite = await api<Invite>("admin/invites", { method: "POST", body: { maxUses }, token });
+                setInviteList(await api<Invite[]>("admin/invites", { token }));
+                setStatus("已创建邀请码 " + invite.code);
+              });
+            }}>
+              <label className="space-y-1 text-sm"><span>可使用次数</span>
+                <input className={field + " max-w-36"} type="number" min={1} max={1000} step={1} required
+                  value={maxUses || ""} onChange={e => setMaxUses(Number(e.target.value))} />
+              </label>
+              <button className={primary} disabled={busy}>生成邀请码</button>
+            </form>
+            {inviteList?.length === 0 && <p className="text-sm text-mut">暂无邀请码。</p>}
+            {inviteList && <ul className="divide-y divide-s3">
+              {inviteList.map(invite => <li key={invite.code} className="flex flex-wrap items-center gap-2 py-2">
+                <div className="min-w-0 flex-1">
+                  <code className="select-text break-all text-sm">{invite.code}</code>
+                  <p className="text-xs text-mut">{invite.active ? "启用" : "停用"} · 已使用 {invite.used}/{invite.max_uses}</p>
+                </div>
+                <button className={button} disabled={busy} onClick={() => void run(async () => {
+                  await navigator.clipboard.writeText(invite.code);
+                  setStatus("邀请码已复制");
+                })}>复制</button>
+                <button className={button} disabled={busy} onClick={() => void run(async () => {
+                  const active = !invite.active;
+                  await api("admin/invites/" + invite.code, { method: "PATCH", body: { active }, token });
+                  setInviteList(current => current?.map(item => item.code === invite.code ? { ...item, active: Number(active) } : item) ?? null);
+                })}>{invite.active ? "停用" : "启用"}</button>
+              </li>)}
+            </ul>}
           </div>
         </div>
       )}
@@ -278,21 +329,20 @@ export default function Platform() {
   }, [load]);
 
   return (
-    <div className="absolute inset-0 flex flex-col">
-      <header className="border-b border-s3 bg-bg shadow-lg">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-7">
-          <a href="/" className="flex items-center gap-2 font-bold"><Logo size={26} />Xghub</a>
+    <div className="absolute inset-0 flex">
+      <aside className="flex w-20 shrink-0 flex-col gap-3 overflow-y-auto border-r border-s3 bg-bg p-2 sm:w-44 sm:p-4">
+          <a href="/" aria-label="玄果首页" className="flex items-center justify-center gap-2 font-bold sm:justify-start"><Logo size={26} /><span className="hidden sm:inline">Xghub</span></a>
           {section === "admin" ? <a href="/" className="text-sm text-mut hover:text-on">返回网站</a> : (
-          <nav aria-label="主导航" className="flex flex-1 flex-wrap gap-1">
+          <nav aria-label="主导航" className="grid gap-1">
             {([{ id: "home", label: "首页" }, { id: "library", label: "分类" },
               { id: "search", label: "搜索" }, { id: "account", label: "我的" }] as const)
               .map(item => <a key={item.id} href={"#" + item.id} aria-current={section === item.id ? "page" : undefined}
-                className={"rounded-lg px-2.5 py-2 text-sm " + (section === item.id ? "bg-pc text-on" : "text-mut hover:bg-s3")}>{item.label}</a>)}
+                className={"rounded-lg px-2 py-3 text-center text-sm sm:text-left " + (section === item.id ? "bg-pc text-on-pc font-semibold" : "text-mut hover:bg-s3")}>{item.label}</a>)}
           </nav>
           )}
-        </div>
-      </header>
-      <main className="relative min-h-0 flex-1">
+          <div className="mt-auto"><WebTheme /></div>
+      </aside>
+      <main className="relative min-w-0 flex-1">
         {section === "home" || section === "library" || section === "search" ? (
           <Videos active platform={{ section, sources, loading, error, reload: () => void load() }} />
         ) : (
