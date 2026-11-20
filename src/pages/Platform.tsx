@@ -281,7 +281,7 @@ export default function Platform() {
     <div className="absolute inset-0 flex flex-col">
       <header className="border-b border-s3 bg-bg">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-7">
-          <a href="/" className="flex items-center gap-2 font-bold"><Logo size={26} />HGhub</a>
+          <a href="/" className="flex items-center gap-2 font-bold"><Logo size={26} />Xghub</a>
           {section === "admin" ? <a href="/" className="text-sm text-mut hover:text-on">返回网站</a> : (
           <nav aria-label="主导航" className="flex flex-1 flex-wrap gap-1">
             {([{ id: "home", label: "首页" }, { id: "library", label: "视频库" },
