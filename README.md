@@ -1,6 +1,8 @@
 <h1><span style="color: red;">转载来自：HGhub 源库，请点击小星星</span></h1>
 
-# HGhub
+# 玄果 / Xghub
+
+[中英文使用说明 / Chinese and English usage guide](docs/usage.md)
 （FROK不点小星星的人=看黄果也打不出来-哈哈）
 
 **基于 Rust 与 Tauri 2 的跨平台界面与交互实践项目。**

@@ -30,7 +30,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     {native ? <AppProvider><App /></AppProvider> : (
       <div className="absolute inset-0 flex flex-col">
         <header className="flex items-center gap-2.5 border-b border-s3 px-5 py-3 font-semibold">
-          <Logo size={25} /> HGhub
+          <Logo size={25} /> Xghub
         </header>
         <main className="relative min-h-0 flex-1"><Videos active /></main>
       </div>

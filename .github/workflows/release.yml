@@ -5,6 +5,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the Windows, Android and web packages to GitHub Releases
+        type: boolean
+        default: false
 
 concurrency:
   group: release-${{ github.ref }}
@@ -60,9 +65,9 @@ jobs:
           if (-not (Test-Path $bin)) {
             $bin = (Get-ChildItem "src-tauri/target/release" -Filter *.exe | Select-Object -First 1).FullName
           }
-          Copy-Item $bin "artifacts/HGhub.exe"
-          Compress-Archive -Path "artifacts/HGhub.exe" -DestinationPath "artifacts/HGhub_${v}_x64_portable.zip" -Force
-          Remove-Item "artifacts/HGhub.exe"
+          Copy-Item $bin "artifacts/Xghub.exe"
+          Compress-Archive -Path "artifacts/Xghub.exe" -DestinationPath "artifacts/Xghub_${v}_x64_portable.zip" -Force
+          Remove-Item "artifacts/Xghub.exe"
           Get-ChildItem artifacts | Select-Object Name, Length
 
       - uses: actions/upload-artifact@v4
@@ -151,7 +156,7 @@ jobs:
             KEY_PASSWORD=android
             suffix="-test"
             keytool -genkeypair -keystore "$KS" -alias "$KEY_ALIAS" -storepass "$STORE_PASSWORD" \
-              -keypass "$KEY_PASSWORD" -dname "CN=HGhub Test Build" -keyalg RSA -keysize 2048 -validity 3650
+              -keypass "$KEY_PASSWORD" -dname "CN=Xghub Test Build" -keyalg RSA -keysize 2048 -validity 3650
           else
             echo "::error::发行版需要配置 Android 发布签名"; exit 1
           fi
@@ -161,7 +166,7 @@ jobs:
           found=0
           for f in $(find src-tauri/gen/android/app/build/outputs/apk -name '*-release*.apk'); do
             abi="$(basename "$(dirname "$(dirname "$f")")")"
-            out="artifacts/HGhub_${VERSION}_${abi}${suffix}.apk"
+            out="artifacts/Xghub_${VERSION}_${abi}${suffix}.apk"
             "$APKSIGNER" sign \
               --ks "$KS" --ks-key-alias "$KEY_ALIAS" \
               --ks-pass env:STORE_PASSWORD --key-pass env:KEY_PASSWORD \
@@ -226,7 +231,7 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts
           cp src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg \
-             "artifacts/HGhub_${{ steps.ver.outputs.version }}_universal.dmg"
+             "artifacts/Xghub_${{ steps.ver.outputs.version }}_universal.dmg"
           ls -lh artifacts
 
       - uses: actions/upload-artifact@v4
@@ -258,22 +263,32 @@ jobs:
           fi
           pnpm build:web
           cd dist-web
-          zip -r "../HGhub_${V}_web.zip" .
+          zip -r "../Xghub_${V}_web.zip" .
       - uses: actions/upload-artifact@v4
         with:
           name: web
-          path: HGhub_*_web.zip
+          path: Xghub_*_web.zip
           if-no-files-found: error
 
   # ================= 发布 =================
   release:
     name: Publish GitHub Release
     needs: [windows, android, macos, web]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: always() && needs.windows.result == 'success' && needs.android.result == 'success' && needs.web.result == 'success' && ((github.ref_type == 'tag' && needs.macos.result == 'success') || (github.event_name == 'workflow_dispatch' && inputs.publish))
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+      - id: release-tag
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "name=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+            echo "name=xghub-v$VERSION" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -284,6 +299,8 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.release-tag.outputs.name }}
+          target_commitish: ${{ github.sha }}
           files: artifacts/*
           generate_release_notes: true
           fail_on_unmatched_files: true
