@@ -1,90 +1,48 @@
-<h1><span style="color: red;">转载来自：HGhub 源库，请点击小星星</span></h1>
+<div align="center">
+  <img src="public/logo.svg" width="112" height="112" alt="玄果 Xghub 软件图标" />
+  <h1>玄果 · Xghub</h1>
+  <p>面向 Windows、Android 和浏览器的视频播放器与片库。</p>
+  <p><a href="https://hghub-video.huangguo-client.workers.dev">在线体验</a> · <a href="https://github.com/Huaxun233/Xghub/releases/latest">下载安装包</a> · <a href="docs/usage.md">中英文完整说明</a></p>
+</div>
 
-# HGhub
-（FROK不点小星星的人=看黄果也打不出来-哈哈）
+## 关于玄果
 
-**基于 Rust 与 Tauri 2 的跨平台界面与交互实践项目。**
+玄果基于 Tauri 2、Rust 和 React，提供视频浏览、分类搜索和个人片单。Windows 与 Android 客户端支持原项目线路，也可以导入自己的 JSON 站源或添加 HTTPS 视频直链。在线版提供独立的邀请制账号和管理后台，服务器部署源码见 Cloudflare 分支。
 
-HGhub 起源于个人对 Tauri 2 和移动端开发的学习与尝试。感谢大家的关注与贡献；项目由个人利用业余时间维护，关注度的增长不会改变维护范围，也不代表服务或支持承诺。
+- **浏览与播放**　从侧边栏打开首页、分类、搜索和「我的」，支持 MP4、HLS（M3U8）和选集。
+- **个人片单**　收藏追剧与续播进度保存在当前设备或浏览器，可以切换淡粉浅色主题和深色主题。
+- **发布与账号**　在线版后台可维护站源、生成和停用邀请码，并查看账号使用的邀请码。[Cloudflare 部署指南](https://github.com/Huaxun233/Xghub/blob/codex/cloudflare-video-platform/docs/cloudflare.md)
 
-## 维护范围与社区反馈
+## 安装和使用
 
-维护者本人后续仅主动维护 **UI/UX、交互细节与用户体验**，不再主动跟进上游数据获取、解析或播放链路适配，不承诺外部接口及相关功能持续可用。
-
-**任何主题的 PR 与 Issues 均可提交。**维护者会根据时间与精力低频阅读、酌情响应，并逐项决定是否处理或合并。提交不代表一定获得回复或被采纳；接受某次社区贡献，也不代表维护者恢复该方向的主动开发或承担持续适配承诺。
-
-本说明用于交代维护者的工作范围与支持边界，不构成对其他开发者的维护要求，也不代表维护者为第三方贡献、修改版或独立项目提供持续担保。
-
-## 非商业立场
-
-本项目采用 [PolyForm Noncommercial 1.0.0](LICENSE)，**禁止任何商业用途**，包括销售、广告变现、卡密、VIP、付费解锁，以及作为收费产品或服务的一部分使用；具体授权范围以许可证全文为准。
-
-维护者**不提供商业授权，不接受任何广告、推广、商务合作或其他合作洽谈**，也未授权任何个人或组织以维护者或本项目名义收费、招揽业务。社区技术贡献与问题反馈不属于商务合作。
-
-## 项目说明与责任边界
-
-- 本仓库记录个人技术实践，包含界面、播放、网络请求等实现。维护者不运营内容托管服务，不参与外部音视频内容的制作、上传或经营。
-- 项目与外部站点、内容提供者及其权利方不存在官方隶属、代理或背书关系。涉及第三方内容、名称或标识时，相关权利仍归各自权利人；代码公开不代表已取得这些内容的使用或传播授权。
-- 软件按现状提供。在适用法律允许的范围内，维护者不保证其完整性、准确性、安全性、适用性或持续可用性，也不承诺修复、更新或响应期限。
-- 第三方修改、分发、宣传或经营行为不代表维护者的意见或授权；维护者无法控制独立副本及其后续行为。本项目的信息以[本仓库](https://github.com/Minireel/HGhub)的公开记录为准。
-- 以上说明用于澄清项目性质、维护范围与授权边界，不替代适用法律，也不排除依法应承担的责任。软件许可证仅涉及相应代码权利，不构成对第三方内容或服务的授权。
-
-## 官方通知与权益反馈
-
-维护者尊重各方合法权益，**将积极响应来自上游、GitHub 平台、版权方及其授权代表、有关机构或公众组织的正式通知与合理关切**。此类事项不适用普通功能反馈的低频处理安排。
-
-可通过 [GitHub Issues](https://github.com/Minireel/HGhub/issues)或平台正式渠道联系，说明相关主体、涉及内容、具体诉求及可核实依据。涉及个人信息或非公开材料时，可先提出联系请求，再协商适当的沟通方式。
-
-收到通知后，维护者会尽快核实、沟通并配合处理，视具体情况采取修改或移除相关内容、暂停相关功能、停止维护、归档或调整仓库可见性等措施。处理范围限于维护者能够控制的仓库和渠道，不承诺控制已独立分发的副本。
-
-## 技术与目录
-
-| 层 | 技术 |
+| 平台 | 操作 |
 | --- | --- |
-| 应用框架 | Rust、Tauri 2 |
-| 界面 | React、TypeScript、Vite、Tailwind CSS |
-| 播放组件 | hls.js |
-| 网络 | reqwest、rustls |
+| Windows | 从 [Releases](https://github.com/Huaxun233/Xghub/releases) 下载 x64 安装程序，也可以使用便携 ZIP。 |
+| Android | 大多数手机选 ARM64 APK。覆盖安装要求新旧包的签名一致。 |
+| 静态网页 | 解压网页 ZIP，用静态 HTTP 服务打开。在首页导入 [JSON 站源](public/video-source.example.json) 或添加 HTTPS 视频直链。 |
+| 在线网页 | 打开 [玄果](https://hghub-video.huangguo-client.workers.dev)，从侧边栏浏览内容。新账号注册需管理员提供邀请码。 |
 
-```text
-src/                    界面、交互、状态管理与组件
-src-tauri/              原生能力与 Rust 实现
-scripts/                开发、构建与验证脚本
-tests/                  本地测试页面与回归用例
-docs/                   技术说明与维护记录
-```
+原生客户端可在侧栏打开 **视频库** 导入站源。同一站源更新时，保留站源 ID 可延续追剧与观看记录。仅添加你有权使用和分享的媒体，HLS 服务器需允许播放器读取播放清单及分片。
 
-## 本地开发
+## English
 
-基础环境：Node.js 22、pnpm 10、Rust 1.90 或更高版本，以及目标平台所需的 Tauri 开发环境。
+Xghub is a video player and library for Windows, Android, and the browser. Use the sidebar to browse categories, search, open your watchlist, and switch between light and dark mode.
 
-```bash
+1. Download the x64 installer or portable ZIP for Windows, or the ARM64 APK for most Android phones. Android updates require the same signing certificate. [Downloads](https://github.com/Huaxun233/Xghub/releases)
+2. Open **Video Library** in the native app to import a [JSON source](public/video-source.example.json) or add an HTTPS MP4 or M3U8 link. For the static web ZIP, extract it, serve it over HTTP, and import a source from the home page.
+3. Use the hosted site to browse published sources. New accounts require an invitation code. Watchlists and playback progress are stored on the current device or browser. [Hosted site](https://hghub-video.huangguo-client.workers.dev)
+
+## 本地开发 / Development
+
+使用 Node.js 22、pnpm 10、Rust 1.90+ 和目标平台所需的 Tauri 工具链。Use Node.js 22, pnpm 10, Rust 1.90+, and the Tauri toolchain for your target platform.
+
+```sh
 pnpm install --frozen-lockfile
-pnpm dev             # 前端开发
-pnpm app:dev         # 桌面应用开发
-pnpm build           # 类型检查与前端构建
+pnpm dev
+pnpm app:dev
+pnpm build:web
 ```
 
-各平台配置位于 `src-tauri/tauri*.conf.json`。移动端及 macOS 开发需要相应平台的 SDK 和工具链。
+当前版本依据 [PolyForm Noncommercial 1.0.0](LICENSE) 分发。第三方媒体的使用权限由相应权利人授予。
 
-- exFAT 等不支持符号链接的文件系统需保留 `.npmrc` 中的 `node-linker=hoisted`；部分原生构建步骤仍可能受文件系统限制。
-- 依赖安装脚本的允许列表见 `package.json` 与 `pnpm-workspace.yaml`。
-- 内容处理、网络安全边界与本地回归说明见[客户端内容与网络安全](docs/security.md)。
-
-## 视频库与跨平台出包
-
-- Windows 和 Android 在主导航打开 **视频库**。可以直接添加 HTTPS 视频链接，也可以导入 [JSON 站源示例](public/video-source.example.json) 的同格式文件。站源按 ID 更新，保留 ID 可以续用追剧和观看记录。记录保存在当前设备或浏览器。
-- 视频库参考小果影视的站源、追剧和续播流程独立实现。站源采用本项目的 JSON 格式，播放使用 MP4 或 HLS 直链。HLS 站源须允许播放器跨域读取播放清单和分片。
-- 在 GitHub Actions 手动运行 **Release**，从运行页的 Artifacts 下载 Windows x64 安装包、各 Android 架构的 APK 和网页 ZIP。缺少正式 Android 签名时，手动构建会使用该次运行独有的测试证书，安装后不可用其他证书签名的 APK 直接覆盖升级。
-- 本地运行 `pnpm build:web` 可以生成 `dist-web/`。将目录放到任意静态 HTTP 服务下访问。网页端提供视频库，原应用的短剧首页、账号及线路等功能使用 Tauri 原生接口。
-- 需要动态网页、独立注册登录和管理后台时，使用 Workers 构建目标。[Cloudflare 部署步骤](docs/cloudflare.md)
-
-## 许可证
-
-当前版本适用 [PolyForm Noncommercial License 1.0.0](LICENSE)。本页说明不替代许可证全文，也不另行增加用户或开发者行为规范。
-
-历史版本 v1.0.1 及更早版本曾以 MIT 许可证发布，已取得的相应授权不因后续换证而撤回；自 v1.1.0 起的新版本适用 PolyForm Noncommercial 1.0.0。
-
-## 社区
-
-[Linux.DO](https://linux.do/)
+<sub>转载与改编出处 / Credits: adapted from <a href="https://github.com/AIRzZ90/study-materials-fork">AIRzZ90/study-materials-fork</a>, based on <a href="https://github.com/Minireel/HGhub">Minireel/HGhub</a>. Video library workflows were inspired by <a href="https://github.com/Xanerix/guoapp">Xanerix/GuoApp</a> and implemented independently.</sub>

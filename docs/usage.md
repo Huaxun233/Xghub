@@ -18,4 +18,4 @@ Xghub is adapted from AIRzZ90's study-materials-fork, based on HGhub by Minireel
 3. Extract the web ZIP and serve it over HTTP. Use **Video Library** to import and play your sources. The included example documents the JSON format.
 4. Watchlists and playback progress are stored in the current client or browser. Add only media URLs you have permission to use and share.
 
-[Xghub releases](https://github.com/Huaxun233/study-materials-fork/releases) · [AIRzZ90 fork](https://github.com/AIRzZ90/study-materials-fork) · [HGhub](https://github.com/Minireel/HGhub) · [GuoApp](https://github.com/Xanerix/guoapp) · [JSON example](../public/video-source.example.json) · [License](../LICENSE)
+[Xghub releases](https://github.com/Huaxun233/Xghub/releases) · [AIRzZ90 fork](https://github.com/AIRzZ90/study-materials-fork) · [HGhub](https://github.com/Minireel/HGhub) · [GuoApp](https://github.com/Xanerix/guoapp) · [JSON example](../public/video-source.example.json) · [License](../LICENSE)
