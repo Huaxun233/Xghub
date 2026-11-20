@@ -8,7 +8,7 @@
   "assets": {
     "directory": "./dist-worker",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/admin", "/admin/"]
   },
   "d1_databases": [
     { "binding": "DB", "database_name": "hghub-video-db", "migrations_dir": "worker/migrations" }

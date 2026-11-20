@@ -68,6 +68,9 @@ async function api(request: Request, env: Env, url: URL) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/admin" || url.pathname === "/admin/") {
+      return env.ASSETS.fetch(new Request(new URL("/", url), request));
+    }
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
     try {
       return await api(request, env, url);

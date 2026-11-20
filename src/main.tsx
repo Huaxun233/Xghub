@@ -10,6 +10,9 @@ import "./index.css";
 import { initPlaybackLog, installPlaybackPageEvents } from "./playbackDiagnostics";
 
 const worker = import.meta.env.MODE === "worker";
+if (worker && location.pathname === "/" && location.hash === "#admin") {
+  location.replace("/admin");
+}
 const native = !worker && isTauri();
 if (native) {
   installPlaybackPageEvents();
