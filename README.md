@@ -77,6 +77,7 @@ pnpm build           # 类型检查与前端构建
 - 视频库参考小果影视的站源、追剧和续播流程独立实现。站源采用本项目的 JSON 格式，播放使用 MP4 或 HLS 直链。HLS 站源须允许播放器跨域读取播放清单和分片。
 - 在 GitHub Actions 手动运行 **Release**，从运行页的 Artifacts 下载 Windows x64 安装包、各 Android 架构的 APK 和网页 ZIP。缺少正式 Android 签名时，手动构建会使用该次运行独有的测试证书，安装后不可用其他证书签名的 APK 直接覆盖升级。
 - 本地运行 `pnpm build:web` 可以生成 `dist-web/`。将目录放到任意静态 HTTP 服务下访问。网页端提供视频库，原应用的短剧首页、账号及线路等功能使用 Tauri 原生接口。
+- 需要动态网页、独立注册登录和管理后台时，使用 Workers 构建目标。[Cloudflare 部署步骤](docs/cloudflare.md)
 
 ## 许可证
 

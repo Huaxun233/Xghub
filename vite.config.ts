@@ -21,6 +21,19 @@ export default defineConfig(({ mode }) => ({
           fileName: "LICENSE.txt",
           source: readFileSync(new URL("./LICENSE", import.meta.url), "utf8"),
         });
+        if (mode === "worker") {
+          this.emitFile({
+            type: "asset",
+            fileName: "_headers",
+            source: [
+              "/*",
+              "  Content-Security-Policy: frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'self'",
+              "  X-Content-Type-Options: nosniff",
+              "  Referrer-Policy: no-referrer",
+              "",
+            ].join("\n"),
+          });
+        }
       },
     },
   ],

@@ -4,11 +4,13 @@ import App from "./App";
 import { AppProvider } from "./store";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import Videos from "./pages/Videos";
+import Platform from "./pages/Platform";
 import { Logo } from "./icons";
 import "./index.css";
 import { initPlaybackLog, installPlaybackPageEvents } from "./playbackDiagnostics";
 
-const native = isTauri();
+const worker = import.meta.env.MODE === "worker";
+const native = !worker && isTauri();
 if (native) {
   installPlaybackPageEvents();
   void initPlaybackLog();
@@ -27,7 +29,7 @@ window.addEventListener("unhandledrejection", (e) => {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    {native ? <AppProvider><App /></AppProvider> : (
+    {worker ? <Platform /> : native ? <AppProvider><App /></AppProvider> : (
       <div className="absolute inset-0 flex flex-col">
         <header className="flex items-center gap-2.5 border-b border-s3 px-5 py-3 font-semibold">
           <Logo size={25} /> HGhub

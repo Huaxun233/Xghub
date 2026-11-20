@@ -11,5 +11,7 @@ strictPeerDependencies: false
 # esbuild 需要跑安装脚本，否则 vite build 缺少二进制。
 onlyBuiltDependencies:
   - esbuild
+  - workerd
 allowBuilds:
   esbuild: true
+  workerd: true

@@ -5,6 +5,10 @@ node_modules/
 # 构建产物
 dist/
 dist-web/
+dist-worker/
+.wrangler/
+.dev.vars
+.dev.vars.*
 artifacts/
 .build-tools/
 .npm-cache/

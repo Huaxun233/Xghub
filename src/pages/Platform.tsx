@@ -1,0 +1,303 @@
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Logo } from "../icons";
+import { MAX_SOURCE_BYTES, parseSource, type Source } from "../videoCatalog";
+import Videos from "./Videos";
+
+const button = "rounded-(--r-ctl) bg-s3 px-3 py-2 text-sm font-medium hover:bg-s4 disabled:opacity-50";
+const primary = "rounded-(--r-ctl) bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:opacity-50";
+const field = "block w-full min-w-0 rounded-(--r-ctl) border border-s4 bg-canvas px-3 py-2 text-sm";
+const panel = "space-y-3 rounded-(--r-md) border border-s3 bg-s1 p-4";
+
+type User = { username: string };
+type AccountPage = { accounts: (User & { id: number; created_at: number })[]; next: number | null };
+type Section = "home" | "library" | "account" | "admin";
+
+async function api<T>(path: string, options?: { method?: string; body?: unknown; token?: string; signal?: AbortSignal }): Promise<T> {
+  const headers = new Headers({ Accept: "application/json" });
+  if (options?.body !== undefined) headers.set("Content-Type", "application/json");
+  if (options?.token) headers.set("Authorization", "Bearer " + options.token);
+  const response = await fetch("/api/" + path, {
+    method: options?.method,
+    body: options?.body === undefined ? undefined : JSON.stringify(options.body),
+    headers,
+    signal: options?.signal,
+    cache: "no-store",
+    credentials: "same-origin",
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || data === null) throw new Error(data?.error || "服务连接失败，请重试");
+  return data as T;
+}
+
+function Account({ user, onUser }: { user: User | null; onUser: (user: User | null) => void }) {
+  const [register, setRegister] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      if (register) {
+        await api("account/register", { method: "POST", body: { username, password } });
+        setRegister(false);
+        setMessage("账号已注册，请登录。");
+      } else {
+        const result = await api<{ user: User }>("account/login", { method: "POST", body: { username, password } });
+        onUser(result.user);
+      }
+      setPassword("");
+    } catch (failure) {
+      setError((failure as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function logout() {
+    setBusy(true);
+    setError("");
+    try {
+      await api("account/logout", { method: "POST" });
+      onUser(null);
+    } catch (failure) {
+      setError((failure as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="mx-auto max-w-md space-y-4 p-5 sm:p-7">
+      <h1 className="text-2xl font-bold">{user ? "我的账号" : register ? "注册账号" : "账号登录"}</h1>
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      {message && <p role="status" className="text-sm text-mut">{message}</p>}
+      {user ? (
+        <div className={panel}>
+          <p className="break-words font-semibold">{user.username}</p>
+          <button className={button} disabled={busy} onClick={() => void logout()}>退出登录</button>
+        </div>
+      ) : (
+        <form onSubmit={submit} className={panel}>
+          <label className="block space-y-1 text-sm"><span>用户名</span>
+            <input className={field} value={username} onChange={e => setUsername(e.target.value)}
+              autoComplete="username" required minLength={3} maxLength={24} />
+          </label>
+          <label className="block space-y-1 text-sm"><span>密码</span>
+            <input className={field} value={password} onChange={e => setPassword(e.target.value)}
+              type="password" autoComplete={register ? "new-password" : "current-password"}
+              required minLength={10} maxLength={128} />
+          </label>
+          {register && <p className="text-xs text-mut">用户名 3–24 个字符，密码至少 10 个字符。</p>}
+          <div className="flex flex-wrap gap-2">
+            <button className={primary} disabled={busy}>{register ? "注册" : "登录"}</button>
+            <button className={button} type="button" disabled={busy} onClick={() => {
+              setRegister(!register); setError(""); setMessage(""); setPassword("");
+            }}>{register ? "返回登录" : "创建账号"}</button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<void> }) {
+  const [draftToken, setDraftToken] = useState("");
+  const [token, setToken] = useState("");
+  const [input, setInput] = useState("");
+  const [page, setPage] = useState<AccountPage>({ accounts: [], next: null });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
+
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
+    setError("");
+    setStatus("");
+    try { await action(); }
+    catch (failure) {
+      setError(failure instanceof SyntaxError ? "请检查 JSON 格式" : (failure as Error).message);
+    } finally { setBusy(false); }
+  }
+
+  async function readAccounts(secret: string, before?: number) {
+    const data = await api<AccountPage>("admin/accounts" + (before ? "?before=" + before : ""), { token: secret });
+    setPage(previous => ({ ...data, accounts: before ? [...previous.accounts, ...data.accounts] : data.accounts }));
+  }
+
+  function connect(event: FormEvent) {
+    event.preventDefault();
+    void run(async () => {
+      await readAccounts(draftToken.trim());
+      setToken(draftToken.trim());
+      setDraftToken("");
+    });
+  }
+
+  function save(event: FormEvent) {
+    event.preventDefault();
+    void run(async () => {
+      if (new TextEncoder().encode(input).length > MAX_SOURCE_BYTES) throw new Error("站源文件不能超过 512 KB");
+      const source = parseSource(JSON.parse(input));
+      await api("admin/catalog/" + source.id, { method: "PUT", body: source, token });
+      await reload();
+      setStatus("已发布 " + source.name);
+    });
+  }
+
+  function remove(source: Source) {
+    if (!window.confirm("确定从网站下架「" + source.name + "」和它的全部剧集？")) return;
+    void run(async () => {
+      await api("admin/catalog/" + source.id, { method: "DELETE", token });
+      await reload();
+      setStatus("已下架 " + source.name);
+    });
+  }
+
+  return (
+    <section className="mx-auto max-w-5xl space-y-4 p-5 sm:p-7">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">管理后台</h1>
+        {token && <button className={button} disabled={busy} onClick={() => {
+          setToken(""); setInput(""); setPage({ accounts: [], next: null }); setError(""); setStatus("");
+        }}>锁定后台</button>}
+      </div>
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      {status && <p role="status" className="text-sm text-mut">{status}</p>}
+      {!token ? (
+        <form onSubmit={connect} className={panel + " max-w-md"}>
+          <label className="block space-y-1 text-sm"><span>管理密钥</span>
+            <input className={field} type="password" required minLength={32} maxLength={128} autoComplete="off"
+              value={draftToken} onChange={e => setDraftToken(e.target.value)} />
+          </label>
+          <button className={primary} disabled={busy}>解锁后台</button>
+        </form>
+      ) : (
+        <div className="grid items-start gap-4 lg:grid-cols-[3fr_2fr]">
+          <div className={panel}>
+            <h2 className="text-lg font-semibold">站源与剧集</h2>
+            {sources.length ? <ul className="divide-y divide-s3">
+              {sources.map(source => <li key={source.id} className="flex flex-wrap items-center gap-2 py-2">
+                <p className="min-w-0 flex-1 break-words text-sm">{source.name} · {source.series.length} 部</p>
+                <button className={button} disabled={busy} aria-label={"编辑 " + source.name}
+                  onClick={() => setInput(JSON.stringify(source, null, 2))}>编辑</button>
+                <button className={button} disabled={busy} aria-label={"下架 " + source.name}
+                  onClick={() => remove(source)}>下架</button>
+              </li>)}
+            </ul> : <p className="text-sm text-mut">暂无已发布的站源。</p>}
+            <form onSubmit={save} className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <label className={button + " cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
+                  导入 JSON
+                  <input aria-label="导入 JSON" type="file" accept=".json,application/json" className="sr-only"
+                    disabled={busy} onChange={event => {
+                      const file = event.currentTarget.files?.[0];
+                      event.currentTarget.value = "";
+                      if (file) void run(async () => {
+                        if (file.size > MAX_SOURCE_BYTES) throw new Error("站源文件不能超过 512 KB");
+                        setInput(await file.text());
+                      });
+                    }} />
+                </label>
+                <button type="button" className={button} disabled={busy} onClick={() => void run(async () => {
+                  const response = await fetch("/video-source.example.json");
+                  if (!response.ok) throw new Error("示例加载失败");
+                  setInput(await response.text());
+                })}>载入站源示例</button>
+              </div>
+              <label className="block space-y-1 text-sm"><span>站源 JSON</span>
+                <textarea className={field + " min-h-52 font-mono"} required maxLength={MAX_SOURCE_BYTES}
+                  value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+              </label>
+              <p className="text-xs text-mut">保存后访客可见。同一个站源 ID 会更新已有内容。</p>
+              <button className={primary} disabled={busy}>保存并发布</button>
+            </form>
+          </div>
+          <div className={panel}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold">注册账号</h2>
+              <button className={button} disabled={busy} onClick={() => void run(() => readAccounts(token))}>刷新</button>
+            </div>
+            {page.accounts.length ? <ul className="divide-y divide-s3">
+              {page.accounts.map(item => <li key={item.id} className="space-y-0.5 py-2 text-sm">
+                <div className="break-words font-medium">{item.username}</div>
+                <time className="text-xs text-mut" dateTime={new Date(item.created_at).toISOString()}>
+                  {new Date(item.created_at).toLocaleString()}
+                </time>
+              </li>)}
+            </ul> : <p className="text-sm text-mut">暂无注册账号。</p>}
+            {page.next && <button className={button} disabled={busy}
+              onClick={() => void run(() => readAccounts(token, page.next ?? undefined))}>加载更多</button>}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function currentSection(): Section {
+  const selection = window.location.hash.slice(1);
+  return selection === "library" || selection === "account" || selection === "admin" ? selection : "home";
+}
+
+export default function Platform() {
+  const [section, setSection] = useState(currentSection);
+  const [user, setUser] = useState<User | null>(null);
+  const [sources, setSources] = useState<Source[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    setError("");
+    try { setSources(await api<Source[]>("catalog", { signal })); }
+    catch (failure) {
+      if (!signal?.aborted) setError((failure as Error).message);
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+    const onHashChange = () => setSection(currentSection());
+    window.addEventListener("hashchange", onHashChange);
+    void load(signal);
+    void api<{ user: User | null }>("account/me", { signal }).then(result => setUser(result.user)).catch(() => {});
+    return () => {
+      controller.abort();
+      window.removeEventListener("hashchange", onHashChange);
+    };
+  }, [load]);
+
+  return (
+    <div className="absolute inset-0 flex flex-col">
+      <header className="border-b border-s3 bg-bg">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-7">
+          <a href="#home" className="flex items-center gap-2 font-bold"><Logo size={26} />HGhub</a>
+          <nav aria-label="主导航" className="flex flex-1 flex-wrap gap-1">
+            {([{ id: "home", label: "首页" }, { id: "library", label: "视频库" },
+              { id: "account", label: user ? "账号" : "登录 / 注册" }, { id: "admin", label: "后台" }] as const)
+              .map(item => <a key={item.id} href={"#" + item.id} aria-current={section === item.id ? "page" : undefined}
+                className={"rounded-lg px-2.5 py-2 text-sm " + (section === item.id ? "bg-pc text-on" : "text-mut hover:bg-s3")}>{item.label}</a>)}
+          </nav>
+        </div>
+      </header>
+      <main className="relative min-h-0 flex-1">
+        {section === "home" || section === "library" ? (
+          <Videos active platform={{ section, sources, loading, error, reload: () => void load() }} />
+        ) : (
+          <div className="absolute inset-0 scroll-y">
+            {section === "account" ? <Account user={user} onUser={setUser} /> : <Admin sources={sources} reload={load} />}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

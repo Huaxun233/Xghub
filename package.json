@@ -8,6 +8,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && tsc --project tsconfig.tests.json && vite build",
     "build:web": "tsc --noEmit && vite build --mode web --outDir dist-web",
+    "build:worker": "tsc --noEmit && tsc --project tsconfig.worker.json && vite build --mode worker --outDir dist-worker",
+    "worker:dev": "wrangler dev --ip 127.0.0.1",
+    "worker:deploy": "pnpm build:worker && wrangler deploy",
     "preview": "vite preview",
     "test:playback": "node scripts/test-playback.mjs",
     "test:api-loading": "node scripts/test-api-loading.mjs",
@@ -29,6 +32,7 @@
     "tailwind-merge": "3.4.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "5.20261119.1",
     "@tailwindcss/vite": "4.1.17",
     "@tauri-apps/cli": "2.10.1",
     "@types/node": "22.19.17",
@@ -38,7 +42,8 @@
     "playwright-core": "1.63.0",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",
-    "vite": "7.3.2"
+    "vite": "7.3.2",
+    "wrangler": "4.165.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
