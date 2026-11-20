@@ -200,6 +200,12 @@ export default function Videos({ active, bottomInset = 0, platform }: {
       <div className="mx-auto max-w-5xl space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-bold tracking-tight">{platform?.section === "home" ? "首页" : platform?.section === "library" ? "分类" : platform?.section === "search" ? "搜索" : platform?.section === "personal" ? "我的片单" : "视频库"}</h1>
+          {platform?.section === "home" && (
+            <a href="https://huangguoai.com/" target="_blank" rel="noreferrer"
+              className={button + " inline-flex items-center gap-2"}>
+              <ILink size={16} />到原站浏览片库
+            </a>
+          )}
           {!platform && <label className={button + " relative cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
             导入站源
             <input className="sr-only" aria-label="导入站源" type="file" accept=".json,application/json"
