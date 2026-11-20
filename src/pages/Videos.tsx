@@ -81,12 +81,12 @@ type PlatformCatalog = {
   reload: () => void;
 };
 
-export default function Videos({ active, bottomInset = 0, platform }: {
-  active: boolean; bottomInset?: number; platform?: PlatformCatalog;
+export default function Videos({ active, bottomInset = 0, platform, section = platform?.section }: {
+  active: boolean; bottomInset?: number; platform?: PlatformCatalog; section?: PlatformCatalog["section"];
 }) {
   const [library, setLibrary] = useState(readLibrary);
   const latest = useRef(library);
-  const [view, setView] = useState<View>(platform?.section === "personal" ? "history" : "all");
+  const [view, setView] = useState<View>(section === "personal" ? "history" : "all");
   const [sourceId, setSourceId] = useState("");
   const [category, setCategory] = useState("");
   const [query, setQuery] = useState("");
@@ -111,7 +111,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
   const entries = sources.flatMap(source => source.series.map(series => ({
     key: (platform ? "shared:" : "") + source.id + "/" + series.id, source, series,
   })));
-  const categories = platform ? [...new Set(entries.map(entry => entry.series.category))].sort() : [];
+  const categories = section ? [...new Set(entries.map(entry => entry.series.category))].sort() : [];
   const selected = entries.find(entry => entry.key === selection?.key);
   const current = selected?.series.episodes.find(episode => episode.id === selection?.episode);
   const visible = entries.filter(({ key, series, source }) => {
@@ -199,7 +199,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
       style={{ paddingTop: "calc(var(--sat, 0px) + 20px)", paddingBottom: "calc(var(--sab, 0px) + " + (bottomInset + 24) + "px)" }}>
       <div className="mx-auto max-w-5xl space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">{platform?.section === "home" ? "首页" : platform?.section === "library" ? "分类" : platform?.section === "search" ? "搜索" : platform?.section === "personal" ? "我的片单" : "视频库"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{section === "home" ? "首页" : section === "library" ? "分类" : section === "search" ? "搜索" : section === "personal" ? "我的片单" : "视频库"}</h1>
           {!platform && <label className={button + " relative cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
             导入站源
             <input className="sr-only" aria-label="导入站源" type="file" accept=".json,application/json"
@@ -223,7 +223,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
           {platform.error}<button className={button} onClick={platform.reload}>重试</button>
         </div>}
 
-        {platform?.section === "home" && !selected && entries[0] && (
+        {section === "home" && !selected && entries[0] && (
           <section className="flex min-h-64 flex-col justify-end gap-3 rounded-3xl border border-s3 bg-linear-to-br from-pc via-s2 to-s1 p-6 shadow-xl sm:min-h-80 sm:p-10">
             <div className="text-sm text-mut">最新上架</div>
             <h2 className="max-w-xl break-words text-3xl font-bold">{entries[0].series.title}</h2>
@@ -281,7 +281,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
               <option value="">所有站源</option>
               {sources.map(source => <option key={source.id} value={source.id}>{source.name}</option>)}
             </select>
-            {platform && categories.length > 0 && (
+            {section && categories.length > 0 && (
               <select aria-label="筛选分类" className={field + " max-w-52"} value={category} onChange={event => setCategory(event.target.value)}>
                 <option value="">所有分类</option>
                 {categories.map(item => <option key={item} value={item}>{item}</option>)}

@@ -99,9 +99,7 @@ export function Logo({ size = 28, className = "" }: { size?: number; className?:
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" className={className} aria-hidden>
       <rect x="2" y="2" width="44" height="44" rx="12" fill="var(--p-primary)" />
-      <path d="M14 13v22M14 24h10M24 13v22" stroke="var(--p-on-primary)" strokeWidth="4.4" strokeLinecap="round" fill="none" />
-      <path d="M31 17.5c3.2 0 5.5 2.6 5.5 6.5S34.2 30.5 31 30.5" stroke="var(--p-on-primary)" strokeWidth="4" strokeLinecap="round" fill="none" />
-      <path d="m33.5 9.5 5.5 3.2-5.5 3.2Z" fill="var(--p-on-primary)" />
+      <path d="M14 13l20 22M34 13 14 35" stroke="var(--p-on-primary)" strokeWidth="5" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
