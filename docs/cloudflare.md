@@ -25,7 +25,7 @@ pnpm worker:dev
 
 ## 先部署到 workers.dev
 
-1. 在本机运行 `pnpm exec wrangler login`，按提示在 Cloudflare 网页授权。遇到账号选择时使用准备托管站点的账号。
+1. 验证 Cloudflare 账号邮箱，再在本机运行 `pnpm exec wrangler login` 并按提示授权。遇到账号选择时使用准备托管站点的账号。
 2. 在 Cloudflare 后台开通 **Workers & Pages**，按提示设置 `workers.dev` 子域名。
 3. 创建 D1 数据库。
 
@@ -51,7 +51,15 @@ pnpm worker:dev
 
 以后更新按顺序执行数据库迁移和 `pnpm worker:deploy`。只想更新视频时，直接在后台按站源 ID 编辑发布。
 
-[Worker 部署](https://developers.cloudflare.com/workers/get-started/guide/) · [D1 迁移](https://developers.cloudflare.com/d1/reference/migrations/) · [Worker Secrets](https://developers.cloudflare.com/workers/configuration/secrets/)
+如果本工作区已有 `.wrangler/production.jsonc`，可直接沿用其中的线上绑定。
+
+```powershell
+pnpm build:worker
+pnpm exec wrangler d1 migrations apply DB --remote --config .wrangler/production.jsonc
+pnpm exec wrangler deploy --config .wrangler/production.jsonc
+```
+
+[邮箱验证](https://developers.cloudflare.com/fundamentals/setup/account/verify-email-address/) · [Worker 部署](https://developers.cloudflare.com/workers/get-started/guide/) · [D1 迁移](https://developers.cloudflare.com/d1/reference/migrations/) · [Worker Secrets](https://developers.cloudflare.com/workers/configuration/secrets/)
 
 ## 买域名后绑定
 
