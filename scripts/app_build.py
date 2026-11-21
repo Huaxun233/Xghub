@@ -11,11 +11,11 @@ ENVIRONMENT_DEFINES = ['PROJECT_URL', 'TELEGRAM_GROUP_URL', 'TELEGRAM_CHANNEL_UR
 
 class AppBuild:
     slug = 'guoapp'
-    display_name = '小果影视'
+    display_name = '玄果 Xghub'
 
     @property
     def bundle_identifier(self):
-        return os.environ.get('PACKAGE_NAME', '').strip() or 'com.guoapp.app'
+        return os.environ.get('PACKAGE_NAME', '').strip() or 'xyz.aokorin.xghub'
 
     @property
     def flutter_arguments(self):

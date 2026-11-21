@@ -5,7 +5,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val appPackageName = System.getenv("PACKAGE_NAME")?.trim()?.takeIf { it.isNotEmpty() } ?: "com.guoapp.app"
+val appPackageName = System.getenv("PACKAGE_NAME")?.trim()?.takeIf { it.isNotEmpty() } ?: "xyz.aokorin.xghub"
 
 val releaseKey = rootProject.file("key.properties")
 val releaseProperties = Properties()
@@ -37,7 +37,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["appLabel"] = "小果影视"
+        manifestPlaceholders["appLabel"] = "玄果 Xghub"
         manifestPlaceholders["appBanner"] = "@drawable/tv_banner"
     }
 

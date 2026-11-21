@@ -2,7 +2,11 @@
 
 <img src="ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png" width="120" alt="小果影视图标">
 
-# 小果影视
+# 玄果 Xghub
+
+玄果客户端改编自 [Xanerix/guoapp（小果影视）](https://github.com/Xanerix/guoapp)，沿用 GPL-3.0 许可证。下方保留上游的功能与使用说明。
+
+This client is based on [Xanerix/guoapp](https://github.com/Xanerix/guoapp) and is distributed under GPL-3.0.
 
 Flutter 多端独立影视应用，手机、平板、电脑和电视分别适配
 
