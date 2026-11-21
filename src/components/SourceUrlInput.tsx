@@ -2,16 +2,22 @@ import { useState } from "react";
 import { loadSource } from "../sourceUrl";
 import type { Source } from "../videoCatalog";
 
-export default function SourceUrlInput({ onLoad, disabled }: { onLoad: (source: Source) => void; disabled?: boolean }) {
+export default function SourceUrlInput({ onLoad, disabled, successHint }: {
+  onLoad: (source: Source) => void; disabled?: boolean; successHint?: string;
+}) {
   const [address, setAddress] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   async function importAddress() {
     setBusy(true);
     setError("");
+    setSuccess("");
     try {
-      onLoad(await loadSource(address));
+      const source = await loadSource(address);
+      onLoad(source);
+      if (successHint) setSuccess("已读取" + source.name + "。" + successHint);
       setAddress("");
     } catch (failure) {
       setError((failure as Error).message);
@@ -23,7 +29,11 @@ export default function SourceUrlInput({ onLoad, disabled }: { onLoad: (source: 
   return <div className="space-y-2 rounded-xl border border-s3 bg-s1 p-3">
     <label className="block text-sm font-medium">站源配置地址
       <input type="url" inputMode="url" placeholder="https://example.com/source.json" value={address} maxLength={4096}
-        disabled={disabled || busy} onChange={event => setAddress(event.target.value)}
+        disabled={disabled || busy} onChange={event => {
+          setAddress(event.target.value);
+          setError("");
+          setSuccess("");
+        }}
         onKeyDown={event => {
           if (event.key === "Enter") {
             event.preventDefault();
@@ -38,5 +48,6 @@ export default function SourceUrlInput({ onLoad, disabled }: { onLoad: (source: 
       {busy ? "正在读取…" : "从地址导入"}
     </button>
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+    {success && <p role="status" className="text-sm text-on">{success}</p>}
   </div>;
 }

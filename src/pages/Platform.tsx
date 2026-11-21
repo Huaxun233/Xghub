@@ -202,7 +202,8 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
               </li>)}
             </ul> : <p className="text-sm text-mut">暂无已发布的站源。</p>}
             <form onSubmit={save} className="space-y-3">
-              <SourceUrlInput disabled={busy} onLoad={source => setInput(JSON.stringify(source, null, 2))} />
+              <SourceUrlInput disabled={busy} successHint="内容已填入下方编辑框，点「保存并发布」后才会出现在片库。"
+                onLoad={source => setInput(JSON.stringify(source, null, 2))} />
               <div className="flex flex-wrap gap-2">
                 <label className={button + " cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
                   导入 JSON
