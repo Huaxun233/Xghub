@@ -1,6 +1,6 @@
 import { MAX_SOURCE_BYTES, parseSource } from "./videoCatalog.ts";
 
-export async function readSourceJson(address: string, fetcher: typeof fetch = fetch): Promise<unknown> {
+export async function readSourceText(address: string, fetcher: typeof fetch = fetch): Promise<string> {
   let url: URL;
   try { url = new URL(address.trim()); }
   catch { throw new Error("请输入完整的 HTTPS 站源地址"); }
@@ -38,14 +38,20 @@ export async function readSourceJson(address: string, fetcher: typeof fetch = fe
     } finally {
       reader.releaseLock();
     }
-    try { return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, size))); }
-    catch { throw new Error("此地址没有返回可读取的 JSON 站源"); }
+    try { return new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, size)); }
+    catch { throw new Error("站源不是有效的 UTF-8 文本"); }
   } catch (error) {
     if (controller.signal.aborted) throw new Error("读取站源超时");
     throw error;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function readSourceJson(address: string, fetcher: typeof fetch = fetch): Promise<unknown> {
+  const body = await readSourceText(address, fetcher);
+  try { return JSON.parse(body); }
+  catch { throw new Error("此地址没有返回可读取的 JSON 站源"); }
 }
 
 export async function loadSource(address: string, fetcher: typeof fetch = fetch) {

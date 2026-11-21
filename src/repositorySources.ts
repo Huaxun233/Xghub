@@ -1,9 +1,9 @@
-import { readSourceJson } from "./sourceUrl.ts";
+import { readSourceJson, readSourceText } from "./sourceUrl.ts";
 import { parseSource, type Episode } from "./videoCatalog.ts";
 
 export const REPOSITORY = "https://github.com/Huaxun233/tvbox";
 export const REPOSITORY_CONFIGS = ["9918.json", "0826.json", "jsm.json"] as const;
-export type RepositorySite = { key: string; name: string; endpoint?: string; reason?: string };
+export type RepositorySite = { key: string; name: string; endpoint?: string; format?: "xml" | "json"; reason?: string };
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -24,12 +24,14 @@ export function parseRepositoryConfig(value: unknown): RepositorySite[] {
   return sites.filter(site => typeof record(site).name === "string").map((value, index) => {
     const site = record(value);
     const type = Number(site.type);
-    const endpoint = type === 1 ? https(site.api) : undefined;
+    const format = type === 0 ? "xml" : type === 1 ? "json" : undefined;
+    const endpoint = format ? https(site.api) : undefined;
     return {
       key: String(site.key ?? "site") + "-" + index,
       name: (String(site.name).trim() || "未命名站点").slice(0, 120),
       endpoint: endpoint?.href,
-      reason: endpoint ? undefined : type === 1 ? "需要 HTTPS 接口" : type === 0 ? "XML 接口待适配" : "需要 TVBox 运行时",
+      format,
+      reason: endpoint ? undefined : format ? "需要 HTTPS 接口" : "需要独立插件适配",
     };
   });
 }
@@ -61,6 +63,25 @@ function episodesFrom(value: unknown): Episode[] {
   return [];
 }
 
+function xmlRecords(body: string) {
+  if (/<!DOCTYPE/i.test(body)) throw new Error("XML 站源不能包含文档类型声明");
+  const document = new DOMParser().parseFromString(body, "application/xml");
+  const list = Array.from(document.documentElement.children).find(node => node.tagName === "list");
+  if (document.documentElement.tagName !== "rss" || !list || document.getElementsByTagName("parsererror").length > 0) {
+    throw new Error("该站点未返回标准 XML 剧集列表");
+  }
+  return Array.from(list.children).filter(node => node.tagName === "video").slice(0, 300).map(video => {
+    const field = (name: string) => Array.from(video.children).find(node => node.tagName === name)?.textContent ?? "";
+    return {
+      vod_id: field("id"),
+      vod_name: field("name"),
+      type_name: field("type"),
+      vod_pic: field("pic"),
+      vod_play_url: Array.from(Array.from(video.getElementsByTagName("dl")).flatMap(line => Array.from(line.getElementsByTagName("dd"))), item => item.textContent).join("$$"),
+    };
+  });
+}
+
 export async function importRepositorySite(site: RepositorySite, page: number, fetcher: typeof fetch = fetch) {
   const url = https(site.endpoint);
   if (!url || !Number.isInteger(page) || page < 1 || page > 9999) throw new Error("站点或页码无效");
@@ -68,13 +89,15 @@ export async function importRepositorySite(site: RepositorySite, page: number, f
   const id = "tvbox-" + Array.from(new Uint8Array(hash).slice(0, 8), b => b.toString(16).padStart(2, "0")).join("") + "-" + page;
   url.searchParams.set("ac", "detail");
   url.searchParams.set("pg", String(page));
-  url.searchParams.set("at", "json");
-  const result = record(await readSourceJson(url.href, fetcher));
-  if (!Array.isArray(result.list)) throw new Error("该站点未返回标准 JSON 剧集列表");
+  const format = site.format ?? "json";
+  url.searchParams.set("at", format);
+  const list = format === "xml" ? xmlRecords(await readSourceText(url.href, fetcher)) :
+    record(await readSourceJson(url.href, fetcher)).list;
+  if (!Array.isArray(list)) throw new Error("该站点未返回标准 JSON 剧集列表");
   const seen = new Set<string>();
-  const series = result.list.slice(0, 300).flatMap((value, index) => {
+  const series = list.slice(0, 300).flatMap((value, index) => {
     const row = record(value);
-    const candidate = String(row.vod_id ?? index);
+    const candidate = String(row.vod_id || index);
     const key = /^[A-Za-z0-9_-]{1,60}$/.test(candidate) ? "v-" + candidate : "row-" + index;
     const title = typeof row.vod_name === "string" ? row.vod_name.trim().slice(0, 120) : "";
     const episodes = title ? episodesFrom(row.vod_play_url) : [];
