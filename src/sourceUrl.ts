@@ -1,6 +1,6 @@
 import { MAX_SOURCE_BYTES, parseSource } from "./videoCatalog.ts";
 
-export async function loadSource(address: string, fetcher: typeof fetch = fetch) {
+export async function readSourceJson(address: string, fetcher: typeof fetch = fetch): Promise<unknown> {
   let url: URL;
   try { url = new URL(address.trim()); }
   catch { throw new Error("请输入完整的 HTTPS 站源地址"); }
@@ -14,7 +14,7 @@ export async function loadSource(address: string, fetcher: typeof fetch = fetch)
     let response: Response;
     try {
       response = await fetcher(url, {
-        signal: controller.signal, credentials: "omit", redirect: "error", referrerPolicy: "no-referrer",
+        signal: controller.signal, credentials: "omit", redirect: "error", referrerPolicy: "no-referrer", cache: "no-cache",
       });
     } catch {
       throw new Error(controller.signal.aborted ? "读取站源超时" : "无法读取地址，请检查网络、重定向或源站跨域设置");
@@ -38,17 +38,20 @@ export async function loadSource(address: string, fetcher: typeof fetch = fetch)
     } finally {
       reader.releaseLock();
     }
-    let value: unknown;
-    try { value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, size))); }
+    try { return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, size))); }
     catch { throw new Error("此地址没有返回可读取的 JSON 站源"); }
-    if (value && typeof value === "object" && ("sites" in value || "spider" in value || "urls" in value || "lives" in value)) {
-      throw new Error("检测到 TVBox 配置。玄果目前仅支持玄果 JSON 站源，需要先转换此配置。");
-    }
-    return parseSource(value);
   } catch (error) {
     if (controller.signal.aborted) throw new Error("读取站源超时");
     throw error;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function loadSource(address: string, fetcher: typeof fetch = fetch) {
+  const value = await readSourceJson(address, fetcher);
+  if (value && typeof value === "object" && ("sites" in value || "spider" in value || "urls" in value || "lives" in value)) {
+    throw new Error("检测到 TVBox 配置，请使用「同步仓库源」查看兼容站点。");
+  }
+  return parseSource(value);
 }

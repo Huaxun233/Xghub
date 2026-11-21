@@ -3,6 +3,7 @@ import { Logo } from "../icons";
 import { MAX_SOURCE_BYTES, parseSource, type Source } from "../videoCatalog";
 import Videos from "./Videos";
 import SourceUrlInput from "../components/SourceUrlInput";
+import RepositorySources from "../components/RepositorySources";
 import WebTheme from "../components/WebTheme";
 
 const button = "rounded-(--r-ctl) bg-s3 px-3 py-2 text-sm font-medium hover:bg-s4 disabled:opacity-50";
@@ -204,6 +205,10 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
             <form onSubmit={save} className="space-y-3">
               <SourceUrlInput disabled={busy} successHint="内容已填入下方编辑框，点「保存并发布」后才会出现在片库。"
                 onLoad={source => setInput(JSON.stringify(source, null, 2))} />
+              <RepositorySources disabled={busy} onLoad={source => {
+                setInput(JSON.stringify(source, null, 2));
+                setStatus("仓库站源已载入编辑框。确认内容后可保存并发布。");
+              }} />
               <div className="flex flex-wrap gap-2">
                 <label className={button + " cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
                   导入 JSON

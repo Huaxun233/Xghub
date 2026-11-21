@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import SourceUrlInput from "../components/SourceUrlInput";
+import RepositorySources from "../components/RepositorySources";
 import VideoSurface, { type VideoHandle } from "../components/VideoSurface";
 import { IClapper, IHist, ILink, IStar, IStarF } from "../icons";
 import {
@@ -261,6 +262,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
           </label>}
         </div>
         {!platform && <SourceUrlInput onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
+        {!platform && <RepositorySources onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
         {!platform && <form onSubmit={addLink} className="grid gap-2 rounded-(--r-md) bg-s1 p-3 sm:grid-cols-[1fr_2fr_auto]">
           <input className={field} aria-label="视频名称" placeholder="视频名称（选填）" value={title}
             onChange={event => setTitle(event.target.value)} maxLength={120} />

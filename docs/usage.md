@@ -25,3 +25,9 @@ Xghub is adapted from AIRzZ90's study-materials-fork, based on HGhub by Minireel
 在客户端的「视频库」或网站管理后台填写玄果格式的 HTTPS JSON 地址，再点「从地址导入」。在后台确认预览后点「保存并发布」。配置链接应允许浏览器跨域访问。TVBox 仓库索引、Spider JAR 和 GuoApp JS 模块需另行适配。
 
 Open Video Library or the site admin panel, paste an HTTPS URL for an Xghub JSON source, and select Import from URL. In the admin panel, review the draft and publish it explicitly. The server hosting the JSON must allow browser cross-origin requests. TVBox indexes, Spider JARs, and GuoApp JS modules require separate adapters.
+
+### 同步仓库源 / Sync repository sources
+
+打开「仓库站源」，选择配置文件并同步 [Huaxun233/tvbox](https://github.com/Huaxun233/tvbox) 的站点列表。可尝试逐页导入允许跨域访问的 HTTPS JSON 站点中直接可播的 MP4 / M3U8。网站后台会先载入草稿，发布前请确认你有公开播放权限。需要 TVBox 插件的站点会显示兼容性提示。更新 fork 后，重新同步即可读取新的配置。
+
+Open Repository Sources, choose a configuration file, and sync the site list from the fork. Import a page from a compatible HTTPS JSON API with CORS and direct MP4 or M3U8 links. The website admin panel loads a draft for review. Confirm publication rights before posting. Sync again after updating the fork.
