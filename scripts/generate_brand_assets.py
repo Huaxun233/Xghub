@@ -18,8 +18,7 @@ def render(svg):
     return Image.open(io.BytesIO(bytes(png))).convert('RGBA')
 
 foreground = render(source)
-silhouette = render(source.replace(' filter="url(#shadow)"', ''))
-icon = Image.new('RGBA', (1024, 1024), '#CDE5F9')
+icon = Image.new('RGBA', (1024, 1024), '#FFFFFF')
 icon.alpha_composite(foreground)
 rounded = icon.copy()
 corners = Image.new('L', (1024, 1024), 0)
@@ -28,8 +27,6 @@ rounded.putalpha(corners)
 icon = icon.convert('RGB')
 adaptive = Image.new('RGBA', (1536, 1536))
 adaptive.paste(foreground, (256, 256))
-monochrome = Image.new('RGBA', (1536, 1536))
-monochrome.paste(silhouette, (256, 256))
 
 def save(image, name):
     destination = output / name
@@ -59,8 +56,6 @@ for density, scale in [('mdpi', 1), ('hdpi', 1.5), ('xhdpi', 2), ('xxhdpi', 3), 
          f'android/app/src/main/res/mipmap-{density}/ic_launcher.png')
     save(adaptive.resize((layer, layer), Image.Resampling.LANCZOS),
          f'android/app/src/main/res/mipmap-{density}/ic_launcher_foreground.png')
-    save(monochrome.resize((layer, layer), Image.Resampling.LANCZOS),
-         f'android/app/src/main/res/mipmap-{density}/ic_launcher_monochrome.png')
 banner = Image.new('RGB', (640, 360), '#F5F9FC')
 badge = rounded.resize((220, 220), Image.Resampling.LANCZOS)
 banner.paste(badge, (210, 70), badge)
