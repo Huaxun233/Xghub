@@ -1,5 +1,5 @@
 export type Episode = { id: string; title: string; url: string; format: "file" | "hls" };
-export type Series = { id: string; title: string; category: string; description: string; episodes: Episode[] };
+export type Series = { id: string; title: string; category: string; description: string; poster?: string; episodes: Episode[] };
 export type Source = { version: 1; id: string; name: string; series: Series[] };
 
 export const MAX_SOURCE_BYTES = 512 * 1024;
@@ -45,6 +45,16 @@ export function parseEpisode(value: unknown): Episode {
   return { id: identifier(row.id), title: string(row.title, "集名"), url: url.href, format };
 }
 
+function parsePoster(value: unknown) {
+  if (typeof value !== "string" || value.length > 4096) return undefined;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function parseSeries(value: unknown): Series {
   const row = object(value);
   return {
@@ -52,6 +62,7 @@ function parseSeries(value: unknown): Series {
     title: string(row.title, "剧名"),
     category: row.category ? string(row.category, "分类") : "未分类",
     description: row.description ? string(row.description, "简介", 1200) : "",
+    poster: parsePoster(row.poster) ?? parsePoster(row.cover) ?? parsePoster(row.vod_pic),
     episodes: collection(row.episodes, 500, parseEpisode),
   };
 }

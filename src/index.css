@@ -1,5 +1,62 @@
 @import "tailwindcss";
 
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr));
+  gap: 16px 12px;
+}
+.catalog-grid.catalog-shelf {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: clamp(112px, 13vw, 156px);
+  overflow-x: auto;
+  padding-block: 3px 7px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: var(--p-s4) transparent;
+}
+.catalog-card { position: relative; min-width: 0; scroll-snap-align: start; }
+.catalog-poster {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 20% 20%, #6e435b, transparent 65%), #251a25;
+  color: #fff4f9;
+  isolation: isolate;
+}
+.catalog-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .18s ease; }
+.catalog-card:hover img { transform: scale(1.035); }
+.catalog-poster-type { position: absolute; inset: auto 0 0; padding: 14px 11px; overflow-wrap: anywhere; }
+.catalog-poster-type small { display: block; color: #f5b9d2; font-size: .68rem; }
+.catalog-poster-type strong { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.catalog-poster-count {
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  border-radius: 5px;
+  background: #f5c3d7;
+  color: #48152d;
+  padding: 3px 6px;
+  font-size: .68rem;
+  font-weight: 700;
+}
+.catalog-favorite {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  padding: 6px;
+  border-radius: 6px;
+  background: #241922cc;
+  color: white;
+}
+.catalog-favorite:hover, .catalog-favorite:focus-visible { background: #5f314c; }
+@media (prefers-reduced-motion: reduce) {
+  .catalog-poster img { transition: none; }
+  .catalog-card:hover img { transform: none; }
+}
+
 /* ===================================================================
    与设计稿一致的 Fluent 色板：深色默认，浅色 html.theme-light
    =================================================================== */

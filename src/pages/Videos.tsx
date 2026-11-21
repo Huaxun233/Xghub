@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import VideoSurface, { type VideoHandle } from "../components/VideoSurface";
-import { IClapper, IHist, ILink, IPlayF, IStar, IStarF } from "../icons";
+import { IClapper, IHist, ILink, IStar, IStarF } from "../icons";
 import {
   LINKS, MAX_SOURCE_BYTES, parseEpisode, parseSource, readLibrary, saveLibrary,
   type Episode, type Library, type Series, type Source,
@@ -12,6 +12,19 @@ const field = "w-full min-w-0 rounded-(--r-ctl) border border-s4 bg-canvas px-3 
 
 type View = "all" | "followed" | "history";
 type Entry = { key: string; series: Series; source: Source };
+
+function Poster({ series }: { series: Series }) {
+  const [failedUrl, setFailedUrl] = useState<string>();
+  const poster = series.poster;
+  return (
+    <span className="catalog-poster" aria-hidden="true">
+      <span className="catalog-poster-type"><small>{series.category}</small><strong>{series.title}</strong></span>
+      {poster && poster !== failedUrl && <img src={poster} alt="" loading="lazy" decoding="async"
+        onError={() => setFailedUrl(poster)} referrerPolicy="no-referrer" />}
+      <span className="catalog-poster-count">{series.episodes.length} 集</span>
+    </span>
+  );
+}
 
 function Playback({ episode, start, save }: {
   episode: Episode;
@@ -125,6 +138,14 @@ export default function Videos({ active, bottomInset = 0, platform }: {
   if (view === "history") {
     visible.sort((a, b) => library.progress[b.key].updated - library.progress[a.key].updated);
   }
+  const shelves = (platform?.section === "home" || platform?.section === "library") &&
+    view === "all" && !category && !sourceId && !query.trim();
+  const groups = new Map<string, Entry[]>();
+  if (shelves) for (const entry of visible) {
+    const group = groups.get(entry.series.category);
+    if (group) group.push(entry);
+    else groups.set(entry.series.category, [entry]);
+  }
 
   function select(entry: Entry, episodeId?: string) {
     const progress = latest.current.progress[entry.key];
@@ -194,18 +215,36 @@ export default function Videos({ active, bottomInset = 0, platform }: {
     }));
   }
 
+  function cards(items: Entry[], row = false) {
+    return <ul className={row ? "catalog-grid catalog-shelf" : "catalog-grid"}>
+      {items.map(entry => {
+        const followed = library.followed.includes(entry.key);
+        const progress = library.progress[entry.key];
+        return <li key={entry.key} className="catalog-card">
+          <button className="block w-full text-left" onClick={() => select(entry)}>
+            <Poster series={entry.series} />
+            <span className="mt-2 block truncate text-sm font-semibold">{entry.series.title}</span>
+            <span className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-mut">
+              {progress && <IHist size={13} className="shrink-0" />}
+              <span className="truncate">{entry.source.name} · {entry.series.category}</span>
+            </span>
+          </button>
+          <button className="catalog-favorite" aria-label={(followed ? "取消追剧 " : "追剧 ") + entry.series.title}
+            aria-pressed={followed} onClick={() => toggleFollow(entry.key)}>
+            {followed ? <IStarF size={17} className="text-amber" /> : <IStar size={17} />}
+          </button>
+        </li>;
+      })}
+    </ul>;
+  }
+
   return (
     <div className="absolute inset-0 scroll-y px-4 sm:px-7"
       style={{ paddingTop: "calc(var(--sat, 0px) + 20px)", paddingBottom: "calc(var(--sab, 0px) + " + (bottomInset + 24) + "px)" }}>
-      <div className="mx-auto max-w-5xl space-y-5">
+      <div className="mx-auto max-w-[1500px] space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-bold tracking-tight">{platform?.section === "home" ? "首页" : platform?.section === "library" ? "分类" : platform?.section === "search" ? "搜索" : platform?.section === "personal" ? "我的片单" : "视频库"}</h1>
-          {platform?.section === "home" && (
-            <a href="https://huangguoai.com/" target="_blank" rel="noreferrer"
-              className={button + " inline-flex items-center gap-2"}>
-              <ILink size={16} />到原站浏览片库
-            </a>
-          )}
+          {platform?.section === "library" && categories.length > 0 && <span className="text-sm text-mut">{categories.length} 个分类</span>}
           {!platform && <label className={button + " relative cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
             导入站源
             <input className="sr-only" aria-label="导入站源" type="file" accept=".json,application/json"
@@ -228,17 +267,6 @@ export default function Videos({ active, bottomInset = 0, platform }: {
         {platform?.error && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-danger">
           {platform.error}<button className={button} onClick={platform.reload}>重试</button>
         </div>}
-
-        {platform?.section === "home" && !selected && entries[0] && (
-          <section className="flex min-h-64 flex-col justify-end gap-3 rounded-3xl border border-s3 bg-linear-to-br from-pc via-s2 to-s1 p-6 shadow-xl sm:min-h-80 sm:p-10">
-            <div className="text-sm text-mut">最新上架</div>
-            <h2 className="max-w-xl break-words text-3xl font-bold">{entries[0].series.title}</h2>
-            {entries[0].series.description && <p className="max-w-xl break-words text-sm text-mut">{entries[0].series.description}</p>}
-            <button className={primary + " flex w-fit items-center gap-2"} onClick={() => select(entries[0])}>
-              <IPlayF size={15} />立即播放
-            </button>
-          </section>
-        )}
 
         {selected && current && (
           <section ref={player} aria-label="播放器" className="space-y-3 rounded-(--r-md) bg-s1 p-3 sm:p-4">
@@ -282,7 +310,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
           {([{ id: "all", label: "全部" }, { id: "followed", label: "追剧" }, { id: "history", label: "观看记录" }] as const)
             .map(item => <button key={item.id} className={view === item.id ? primary : button}
               aria-pressed={view === item.id} onClick={() => { setView(item.id); setSourceId(""); setCategory(""); }}>{item.label}</button>)}
-          <div className="ml-auto flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-wrap gap-2 sm:ml-auto">
             <select aria-label="筛选站源" className={field + " max-w-52"} value={sourceId} onChange={event => setSourceId(event.target.value)}>
               <option value="">所有站源</option>
               {sources.map(source => <option key={source.id} value={source.id}>{source.name}</option>)}
@@ -299,29 +327,16 @@ export default function Videos({ active, bottomInset = 0, platform }: {
             onChange={event => setQuery(event.target.value)} />
         </div>
 
-        {visible.length ? (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {visible.map(entry => {
-              const followed = library.followed.includes(entry.key);
-              const progress = library.progress[entry.key];
-              return <li key={entry.key} className="relative min-w-0 overflow-hidden rounded-2xl border border-s3 bg-s1 transition hover:border-primary">
-                <button className="block w-full min-w-0 text-left" onClick={() => select(entry)}>
-                  <span className="grid aspect-video place-items-center bg-linear-to-br from-pc to-s2 text-primary">
-                    {progress ? <IHist size={26} /> : <IPlayF size={26} />}
-                  </span>
-                  <span className="block min-w-0 p-3">
-                    <span className="block truncate font-semibold">{entry.series.title}</span>
-                    <span className="block truncate text-xs text-mut">{entry.source.name} · {entry.series.category} · {entry.series.episodes.length} 集</span>
-                  </span>
-                </button>
-                <button className={button + " absolute right-2 top-2"} aria-label={(followed ? "取消追剧 " : "追剧 ") + entry.series.title}
-                  aria-pressed={followed} onClick={() => toggleFollow(entry.key)}>
-                  {followed ? <IStarF size={17} className="text-amber" /> : <IStar size={17} />}
-                </button>
-              </li>;
-            })}
-          </ul>
-        ) : <div className="grid justify-items-center gap-2 rounded-(--r-md) bg-s1 px-3 py-10 text-center text-sm text-mut">
+        {visible.length ? shelves ? <div className="space-y-8">
+          {[...groups].map(([name, items]) => <section key={name} aria-label={name}>
+            <header className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="min-w-0 truncate text-xl font-semibold">{name}</h2>
+              <button className="shrink-0 rounded-lg px-2 py-1 text-sm text-mut hover:bg-s2 hover:text-on"
+                aria-label={"查看全部" + name} onClick={() => setCategory(name)}>全部 ›</button>
+            </header>
+            {cards(items.slice(0, 8), true)}
+          </section>)}
+        </div> : cards(visible) : <div className="grid justify-items-center gap-2 rounded-(--r-md) bg-s1 px-3 py-10 text-center text-sm text-mut">
           <IClapper size={30} />
           <p>{sources.length ? "没有符合条件的视频" :
             platform?.loading ? "正在加载视频…" : platform ? "暂无已发布的视频" : "导入 JSON 站源或添加视频直链后开始播放"}</p>

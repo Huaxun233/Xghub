@@ -224,7 +224,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
                 <textarea className={field + " min-h-52 font-mono"} required maxLength={MAX_SOURCE_BYTES}
                   value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
               </label>
-              <p className="text-xs text-mut">保存后访客可见。同一个站源 ID 会更新已有内容。</p>
+              <p className="text-xs text-mut">保存后访客可见。同一个站源 ID 会更新已有内容。剧集可填写 poster，支持 HTTPS 封面地址。</p>
               <button className={primary} disabled={busy}>保存并发布</button>
             </form>
           </div>
