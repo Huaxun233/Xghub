@@ -8,9 +8,11 @@
 
 This client is based on [Xanerix/guoapp](https://github.com/Xanerix/guoapp) and is distributed under GPL-3.0.
 
-Flutter 多端独立影视应用，手机、平板、电脑和电视分别适配
+面向 Android 与 Windows 的开源影视客户端，提供本地漫画阅读预览。
 
-[![Release](https://img.shields.io/github/v/release/Xanerix/guoapp?style=flat-square&color=3d4656)](../../releases)
+An open-source video client for Android and Windows, with a preview of local comic reading.
+
+[![Release](https://img.shields.io/github/v/release/Huaxun233/Xghub?style=flat-square&color=3d4656)](../../releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-3d4656?style=flat-square)](LICENSE)
 ![Flutter](https://img.shields.io/badge/Flutter-3.47.9-02569B?style=flat-square&logo=flutter&logoColor=white)
 ![Platforms](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Windows%20%7C%20macOS-8fa3bc?style=flat-square)
@@ -18,6 +20,18 @@ Flutter 多端独立影视应用，手机、平板、电脑和电视分别适配
 [下载](#安装) · [功能](#功能) · [使用说明](#使用说明) · [隐私](#检查更新与使用统计) · [开发](#开发)
 
 </div>
+
+## 玄果使用指南 · Xghub Quick Start
+
+从 [玄果 Releases](https://github.com/Huaxun233/Xghub/releases) 下载。Android 手机通常选择 ARM64 APK。Windows x64 可以选安装程序或便携 ZIP。
+
+- **影视**：打开「影视」，通过「我的 → 模块」管理内容源，在影视页发现、搜索和播放。
+- **漫画（源码预览）**：打开「漫画 → 打开本地漫画图片」，多选图片后按文件名自然顺序翻页，支持缩放。VeneraX 在线源、搜索和书架尚未接入，本地漫画预览尚未发布为安装包。
+
+Download from [Xghub Releases](https://github.com/Huaxun233/Xghub/releases). Choose the ARM64 APK for most Android phones or the Windows x64 installer or portable ZIP.
+
+- **Video**: Manage content modules in Profile → Modules. Browse, search, and play from the Video tab.
+- **Comics (source preview)**: Select multiple local images to read in natural filename order and zoom in. VeneraX online sources, search, and bookshelf integration are pending. This preview is currently available in source only.
 
 ---
 

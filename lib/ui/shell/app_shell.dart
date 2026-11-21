@@ -11,6 +11,7 @@ import '../../follow_updater.dart';
 import '../../local_store.dart';
 import '../../models.dart';
 import '../app_scope.dart';
+import '../comics/comics_page.dart';
 import '../explore/explore_page.dart';
 import '../explore/source_actions.dart';
 import '../follow/follow_page.dart';
@@ -25,7 +26,8 @@ import '../widgets/motion/motion_widgets.dart';
 import '../widgets/source_bar.dart';
 
 enum AppTab {
-  explore('发现', Icons.explore_outlined, Icons.explore),
+  explore('影视', Icons.explore_outlined, Icons.explore),
+  comics('漫画', Icons.menu_book_outlined, Icons.menu_book),
   follow('追剧', Icons.bookmark_border_rounded, Icons.bookmark_rounded),
   history('历史', Icons.history_rounded, Icons.history_rounded),
   mine('我的', Icons.person_outline_rounded, Icons.person_rounded);
@@ -188,7 +190,7 @@ class _AppShellState extends State<AppShell> {
       if (switch (tab) {
         AppTab.history =>
           widget.store.historyTab && !AppScope.of(context).television,
-        AppTab.explore || AppTab.follow || AppTab.mine => true,
+        AppTab.explore || AppTab.comics || AppTab.follow || AppTab.mine => true,
       })
         tab,
   ];
@@ -298,6 +300,7 @@ class _AppShellState extends State<AppShell> {
 
   Widget _root(AppTab tab) => switch (tab) {
     AppTab.explore => ExplorePage(key: _explore, store: widget.store),
+    AppTab.comics => const ComicsPage(),
     AppTab.follow => FollowPage(
       store: widget.store,
       entryFocus: _followEntry,
@@ -417,7 +420,7 @@ class _AppShellState extends State<AppShell> {
                         final entry = switch (_tab) {
                           AppTab.follow => _followEntry,
                           AppTab.mine => _mineEntry,
-                          AppTab.explore || AppTab.history => null,
+                          AppTab.explore || AppTab.comics || AppTab.history => null,
                         };
                         if (event is KeyUpEvent ||
                             event.logicalKey != LogicalKeyboardKey.arrowDown ||
