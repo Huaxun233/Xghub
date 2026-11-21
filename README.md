@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png" width="120" alt="小果影视图标">
+<img src="scripts/brand_icon.svg" width="120" alt="玄果 Xghub 图标">
 
 # 玄果 Xghub
 
