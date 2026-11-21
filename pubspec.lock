@@ -1110,12 +1110,11 @@ packages:
     source: hosted
     version: "1.1.1"
   rhttp:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: rhttp
-      sha256: "32482042b007474f287f843c298d46a5589aaf8db9603ff78527b5e0bcbee40a"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/rhttp"
+      relative: true
+    source: path
     version: "0.16.0"
   rxdart:
     dependency: transitive

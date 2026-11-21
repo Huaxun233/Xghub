@@ -199,3 +199,9 @@ Download from [Xghub Releases](https://github.com/Huaxun233/Xghub/releases). Cho
 ## 开发
 
 构建、测试、架构和发布流程见 [DEVELOPMENT.md](DEVELOPMENT.md)，参与开发和编写社区站源见 [CONTRIBUTING.md](CONTRIBUTING.md)，版本更新记录见 [CHANGELOG.md](CHANGELOG.md)。
+
+### 原生依赖构建补丁 / Native dependency build patches
+
+Android 使用项目内固定的 `rhttp 0.16.0`（MIT）和 `flutter_inappwebview_android` 上游快照。为适配 Gradle 9，rhttp 的构建调用改用 ExecOperations、compileSdk 更新为 36，并在显式指定架构时只构建该架构。运行时代码保留上游实现。详情见 [rhttp 补丁说明](packages/rhttp/XGHUB_PATCH.md) 和各包内许可证。
+
+Android uses vendored rhttp 0.16.0 (MIT) and a pinned flutter_inappwebview_android snapshot. The rhttp build uses ExecOperations for Gradle 9, compiles against SDK 36, and honors explicitly requested architectures. Its runtime implementation remains upstream. See the [rhttp patch notes](packages/rhttp/XGHUB_PATCH.md) and the licenses in each package.
