@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import 'venera_page.dart';
+
 class ComicsPage extends StatefulWidget {
   const ComicsPage({super.key});
 
@@ -18,10 +20,9 @@ class _ComicsPageState extends State<ComicsPage> {
     try {
       final result = await FilePicker.pickFiles(
         type: FileType.image,
-        allowMultiple: true,
       );
-      if (!mounted || result == null) return;
-      final pages = result.files.where((file) => file.path != null).toList()
+      if (!mounted || result.isEmpty) return;
+      final pages = result.where((file) => file.path != null).toList()
         ..sort((a, b) => _compareNames(a.name, b.name));
       if (pages.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -56,6 +57,14 @@ class _ComicsPageState extends State<ComicsPage> {
               onPressed: _picking ? null : _openImages,
               icon: const Icon(Icons.folder_open),
               label: const Text('打开本地漫画图片'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(builder: (_) => const VeneraPage()),
+              ),
+              icon: const Icon(Icons.travel_explore),
+              label: const Text('在线漫画与书架'),
             ),
             const SizedBox(height: 12),
             const Text('可一次选择多张图片，按文件名顺序阅读。'),

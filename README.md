@@ -4,15 +4,15 @@
 
 # 玄果 Xghub
 
-玄果客户端改编自 [Xanerix/guoapp（小果影视）](https://github.com/Xanerix/guoapp)，沿用 GPL-3.0 许可证。下方保留上游的功能与使用说明。
+玄果的影视功能改编自 [Xanerix/guoapp（小果影视）](https://github.com/Xanerix/guoapp)，在线漫画阅读基于 [Kyosee/VeneraX](https://github.com/Kyosee/VeneraX)。玄果沿用 GPL-3.0 许可。
 
-This client is based on [Xanerix/guoapp](https://github.com/Xanerix/guoapp) and is distributed under GPL-3.0.
+Xghub combines the video client from [Xanerix/guoapp](https://github.com/Xanerix/guoapp) and the comics reader from [Kyosee/VeneraX](https://github.com/Kyosee/VeneraX) under GPL-3.0.
 
-面向 Android 与 Windows 的开源影视客户端，提供本地漫画阅读预览。
+面向 Android 和 Windows 的开源影视与漫画客户端。
 
-An open-source video client for Android and Windows, with a preview of local comic reading.
+An open-source video and comics client for Android and Windows.
 
-[![Release](https://img.shields.io/github/v/release/Huaxun233/Xghub?style=flat-square&color=3d4656)](../../releases)
+[![Release](https://img.shields.io/github/v/release/Huaxun233/Xghub?style=flat-square&color=3d4656)](https://github.com/Huaxun233/Xghub/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-3d4656?style=flat-square)](LICENSE)
 ![Flutter](https://img.shields.io/badge/Flutter-3.47.9-02569B?style=flat-square&logo=flutter&logoColor=white)
 ![Platforms](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Windows%20%7C%20macOS-8fa3bc?style=flat-square)
@@ -26,12 +26,12 @@ An open-source video client for Android and Windows, with a preview of local com
 从 [玄果 Releases](https://github.com/Huaxun233/Xghub/releases) 下载。Android 手机通常选择 ARM64 APK。Windows x64 可以选安装程序或便携 ZIP。
 
 - **影视**：打开「影视」，通过「我的 → 模块」管理内容源，在影视页发现、搜索和播放。
-- **漫画（源码预览）**：打开「漫画 → 打开本地漫画图片」，多选图片后按文件名自然顺序翻页，支持缩放。VeneraX 在线源、搜索和书架尚未接入，本地漫画预览尚未发布为安装包。
+- **漫画**：进入「漫画 → 在线漫画与书架」，完成首次设置后打开漫画源管理，可从文件或网址导入 VeneraX 兼容的漫画源。通过搜索打开漫画、选择章节，或将漫画加入书架。「打开本地漫画图片」也可离线阅读。已发布版本的功能以对应发布说明为准。
 
 Download from [Xghub Releases](https://github.com/Huaxun233/Xghub/releases). Choose the ARM64 APK for most Android phones or the Windows x64 installer or portable ZIP.
 
 - **Video**: Manage content modules in Profile → Modules. Browse, search, and play from the Video tab.
-- **Comics (source preview)**: Select multiple local images to read in natural filename order and zoom in. VeneraX online sources, search, and bookshelf integration are pending. This preview is currently available in source only.
+- **Comics**: Open Comics → Online Comics & Bookshelf, complete first-time setup, then import a compatible VeneraX source from a file or URL. Search for comics, open chapters, and save titles to the bookshelf. The local image reader is also available. See the release notes for features included in each download.
 
 ---
 

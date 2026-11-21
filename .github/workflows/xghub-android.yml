@@ -39,6 +39,11 @@ jobs:
           packages: "platforms;android-36"
           accept-android-sdk-licenses: true
       - run: sdkmanager 'ndk;28.2.13676358'
+      - name: Set up Rust for Android
+        run: |
+          rustup toolchain install 1.95 --profile minimal
+          rustup default 1.95
+          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
       - name: Configure Android signing
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
