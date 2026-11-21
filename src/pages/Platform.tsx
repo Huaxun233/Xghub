@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Logo } from "../icons";
 import { MAX_SOURCE_BYTES, parseSource, type Source } from "../videoCatalog";
 import Videos from "./Videos";
+import SourceUrlInput from "../components/SourceUrlInput";
 import WebTheme from "../components/WebTheme";
 
 const button = "rounded-(--r-ctl) bg-s3 px-3 py-2 text-sm font-medium hover:bg-s4 disabled:opacity-50";
@@ -201,6 +202,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
               </li>)}
             </ul> : <p className="text-sm text-mut">暂无已发布的站源。</p>}
             <form onSubmit={save} className="space-y-3">
+              <SourceUrlInput disabled={busy} onLoad={source => setInput(JSON.stringify(source, null, 2))} />
               <div className="flex flex-wrap gap-2">
                 <label className={button + " cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
                   导入 JSON

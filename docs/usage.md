@@ -19,3 +19,9 @@ Xghub is adapted from AIRzZ90's study-materials-fork, based on HGhub by Minireel
 4. Watchlists and playback progress are stored in the current client or browser. Add only media URLs you have permission to use and share.
 
 [Xghub releases](https://github.com/Huaxun233/Xghub/releases) · [AIRzZ90 fork](https://github.com/AIRzZ90/study-materials-fork) · [HGhub](https://github.com/Minireel/HGhub) · [GuoApp](https://github.com/Xanerix/guoapp) · [JSON example](../public/video-source.example.json) · [License](../LICENSE)
+
+### 通过地址导入 / Import from a URL
+
+在客户端的「视频库」或网站管理后台填写玄果格式的 HTTPS JSON 地址，再点「从地址导入」。在后台确认预览后点「保存并发布」。配置链接应允许浏览器跨域访问。TVBox 仓库索引、Spider JAR 和 GuoApp JS 模块需另行适配。
+
+Open Video Library or the site admin panel, paste an HTTPS URL for an Xghub JSON source, and select Import from URL. In the admin panel, review the draft and publish it explicitly. The server hosting the JSON must allow browser cross-origin requests. TVBox indexes, Spider JARs, and GuoApp JS modules require separate adapters.

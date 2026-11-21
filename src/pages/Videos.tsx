@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import SourceUrlInput from "../components/SourceUrlInput";
 import VideoSurface, { type VideoHandle } from "../components/VideoSurface";
 import { IClapper, IHist, ILink, IStar, IStarF } from "../icons";
 import {
@@ -156,20 +157,24 @@ export default function Videos({ active, bottomInset = 0, platform }: {
     window.requestAnimationFrame(() => player.current?.scrollIntoView({ block: "nearest" }));
   }
 
+  function applyImportedSource(source: Source) {
+    if (source.id === LINKS) throw new Error("此 ID 保留给视频直链");
+    update(previous => ({
+      ...previous, sources: [...previous.sources.filter(item => item.id !== source.id), source],
+    }));
+    setSourceId(source.id);
+    setView("all");
+    setQuery("");
+    setMessage("已导入 " + source.name);
+  }
+
   async function importSource(file: File) {
     setMessage("");
     setError("");
     try {
       if (file.size > MAX_SOURCE_BYTES) throw new Error("站源文件不能超过 512 KB");
       const source = parseSource(JSON.parse(await file.text()));
-      if (source.id === LINKS) throw new Error("此 ID 保留给视频直链");
-      update(previous => ({
-        ...previous, sources: [...previous.sources.filter(item => item.id !== source.id), source],
-      }));
-      setSourceId(source.id);
-      setView("all");
-      setQuery("");
-      setMessage("已导入 " + source.name);
+      applyImportedSource(source);
     } catch (reason) {
       setError(reason instanceof SyntaxError ? "无法读取 JSON，请检查站源文件格式。" : (reason as Error).message);
     }
@@ -255,6 +260,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
               }} />
           </label>}
         </div>
+        {!platform && <SourceUrlInput onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
         {!platform && <form onSubmit={addLink} className="grid gap-2 rounded-(--r-md) bg-s1 p-3 sm:grid-cols-[1fr_2fr_auto]">
           <input className={field} aria-label="视频名称" placeholder="视频名称（选填）" value={title}
             onChange={event => setTitle(event.target.value)} maxLength={120} />
