@@ -17,3 +17,8 @@ JavaScript 插件：使用独立插件入口导入基础 VeneraX ComicSource 脚
 ## English
 
 Open https://aokorin.xyz and choose Videos or Comics in the sidebar. Comics supports JSON catalog import, image reading, a local bookshelf, chapter progress, and manual account cloud sync. JavaScript ComicSource plugins run in a separate worker with basic search, details, chapter, HTML, network and hash helpers. Plugin settings/data remain local to this browser. Native-only APIs and sources that deny browser access are not fully supported. Existing upstream video links may be unavailable; deployment does not restore those sources.
+
+内置漫画源仓库：在「漫画 → JavaScript 漫画插件」点击「同步内置仓库」，选择源后点击「安装选中漫画源」。默认索引为 https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json 。只安装选中的插件，不会自动安装全部源；可用性仍受浏览器接口和跨域限制。
+
+Built-in repository: open Comics → JavaScript plugins, sync the built-in repository, select a source and install it. The default index is the Venera configs jsDelivr URL above. Installation does not guarantee browser compatibility.
+

@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ComicPluginRuntime, type ComicPluginInfo } from '../comicPluginRuntime';
 import { parseComicCatalog, type WebComic } from '../comicCatalog';
 import { readSourceText } from '../sourceUrl';
+import { COMIC_REPOSITORY_URL, parseComicRepository, type ComicRepositoryEntry } from '../comicRepository';
 const button='rounded-xl bg-s3 px-4 py-2 text-sm';
 export default function ComicPlugins({onRead}:{onRead:(comic:WebComic,source:string)=>void}) {
+ const [repository,setRepository]=useState<ComicRepositoryEntry[]>([]);const [selectedSource,setSelectedSource]=useState('');
  const runtime=useRef<ComicPluginRuntime|null>(null);
  const [info,setInfo]=useState<ComicPluginInfo|null>(null);
  const [page,setPage]=useState(1);const [maxPage,setMaxPage]=useState(1);const [options,setOptions]=useState<string[]>([]);
@@ -11,7 +13,7 @@ export default function ComicPlugins({onRead}:{onRead:(comic:WebComic,source:str
  const [results,setResults]=useState<any[]>([]); const [error,setError]=useState(''); const [busy,setBusy]=useState(false);
  useEffect(()=>{let cancelled=false;try{const script=localStorage.getItem('xghub.web.comic-plugin.v1');if(script){const next=new ComicPluginRuntime(script);runtime.current=next;void next.call<ComicPluginInfo>('info').then(metadata=>{if(!cancelled)setInfo(metadata)}).catch(e=>{if(!cancelled)setError((e as Error).message)});}}catch(e){setError((e as Error).message)}return()=>{cancelled=true;runtime.current?.dispose();}},[]);
  async function run(action:()=>Promise<void>){setBusy(true);setError('');try{await action()}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
- async function install(script:string){const next=new ComicPluginRuntime(script);try{const metadata=await next.call<ComicPluginInfo>('info');if(!metadata.key||!metadata.name)throw Error('插件缺少名称或 key');runtime.current?.dispose();runtime.current=next;localStorage.setItem('xghub.web.comic-plugin.v1',script);setInfo(metadata);setResults([]);}catch(e){next.dispose();throw e}}
+ async function install(script:string){const next=new ComicPluginRuntime(script);try{const metadata=await next.call<ComicPluginInfo>('info');if(!metadata.key||!metadata.name)throw Error('插件缺少名称或 key');runtime.current?.dispose();runtime.current=next;localStorage.setItem('xghub.web.comic-plugin.v1',script);setInfo(metadata);setResults([]);setOptions([]);setPage(1);setMaxPage(1);setDetail(null);}catch(e){next.dispose();throw e}}
  async function open(item:any){
   if(!runtime.current||!info)return;
   const details=await runtime.current.call<any>('infoComic',item.id);
@@ -23,6 +25,11 @@ export default function ComicPlugins({onRead}:{onRead:(comic:WebComic,source:str
  const [detail,setDetail]=useState<{id:string;title:string;cover?:string;description:string;chapters:[string,unknown][]}|null>(null);
  return <details className="mb-6 rounded-2xl border border-s3 bg-s1 p-4"><summary className="cursor-pointer font-semibold">JavaScript 漫画插件{info?' · '+info.name:''}</summary>
  <p className="my-3 text-sm text-mut">支持基础 VeneraX 搜索、详情与章节接口。需要原生解密、验证码或特殊请求头的源可能不兼容；源站须允许浏览器跨域访问。插件在独立执行环境运行，保存在当前浏览器，刷新后自动恢复。</p>
+ <section aria-label="内置漫画源仓库" className="my-3 rounded-xl bg-bg p-3">
+ <p className="mb-2 text-sm">内置仓库：Venera configs</p><p className="mb-3 break-all text-xs text-mut">{COMIC_REPOSITORY_URL}</p>
+ <button className={button} disabled={busy} onClick={()=>void run(async()=>{const entries=parseComicRepository(JSON.parse(await readSourceText(COMIC_REPOSITORY_URL)));setRepository(entries);setSelectedSource(entries[0]?.key||'')})}>同步内置仓库</button>
+ {repository.length>0&&<div className="mt-3 flex flex-wrap gap-2"><select aria-label="选择仓库漫画源" className={button} disabled={busy} value={selectedSource} onChange={e=>setSelectedSource(e.target.value)}>{repository.map(item=><option key={item.key} value={item.key}>{item.name} {item.version}</option>)}</select><button className={button} disabled={busy||!selectedSource} onClick={()=>void run(async()=>{const entry=repository.find(item=>item.key===selectedSource);if(!entry)throw Error('请选择漫画源');await install(await readSourceText(entry.url))})}>安装选中漫画源</button><span className="text-xs text-mut">共 {repository.length} 个源，按需安装；兼容性取决于插件接口和源站。</span></div>}
+ </section>
  <div className="flex flex-wrap gap-2"><label className={button}>导入 JS 插件<input aria-label="导入 JS 漫画插件" className="hidden" type="file" accept=".js,text/javascript" disabled={busy} onChange={e=>{const f=e.target.files?.[0];if(f)void run(async()=>{if(f.size>524288)throw Error('插件不能超过 512 KB');await install(await f.text())});e.target.value=''}}/></label></div>
  {info&&<button className={button} disabled={busy} onClick={()=>{try{localStorage.removeItem('xghub.web.comic-plugin.v1');runtime.current?.dispose();runtime.current=null;setInfo(null);setResults([]);setDetail(null);}catch{setError('插件移除失败')}}}>移除当前插件</button>}
  <form className="my-3 flex gap-2" onSubmit={e=>{e.preventDefault();void run(async()=>install(await readSourceText(address)))}}><input aria-label="漫画插件网址" type="url" required placeholder="HTTPS 插件网址" className="min-w-0 flex-1 rounded-xl bg-bg p-2" value={address} onChange={e=>setAddress(e.target.value)}/><button className={button} disabled={busy}>导入插件网址</button></form>
