@@ -1,0 +1,15 @@
+import {build} from 'esbuild';
+import assert from 'node:assert/strict';
+const bundled=await build({entryPoints:['worker/comicRepository.ts'],bundle:true,write:false,format:'esm',platform:'node'});
+const {comicRepository}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
+const request=new Request('https://aokorin.xyz/api/comics/repository/index.json');
+let calls=[];const documents=new Map();const cache={async match(key){return documents.get(key.url)?.clone()},async put(key,response){documents.set(key.url,response)}};
+const fetcher=async (url,init)=>{assert.equal(init.redirect,'manual');calls.push(String(url));if(String(url).startsWith('https://raw.'))throw Error('first upstream unavailable');return Response.json([{key:'demo',name:'Demo',version:'1',fileName:'demo.js',url:'https://unwanted.example/source.js'}])};
+const result=await comicRepository(request,'index.json',{fetcher,cache});const rows=await result.json();assert.equal(calls.length,2);assert.equal(rows[0].url,'https://aokorin.xyz/api/comics/repository/demo.js');assert.equal(result.headers.get('access-control-allow-origin'),'*');await comicRepository(request,'index.json',{fetcher,cache});assert.equal(calls.length,2,'cached result must avoid upstream requests');
+for(const file of ['../secret','https://evil.example/a.js','a.js?url=evil'])await assert.rejects(()=>comicRepository(request,file,{fetcher}),/地址无效/);
+assert.equal(calls.length,2);
+let attempt=0;const normalized=await comicRepository(request,'index.json',{fetcher:async()=>++attempt===1?new Response('<html>error</html>'):Response.json([{key:'valid',name:'Valid',fileName:'valid.js'}])});assert.equal((await normalized.json())[0].key,'valid');
+await assert.rejects(()=>comicRepository(request,'index.json',{fetcher:async()=>new Response('down',{status:503})}),/暂时不可用/);
+await assert.rejects(()=>comicRepository(new Request(request.url+'?url=https://evil.example'),'index.json',{fetcher}),/地址无效/);
+const plugin=await comicRepository(new Request('https://aokorin.xyz/api/comics/repository/demo.js'),'demo.js',{fetcher:async()=>new Response('class Demo extends ComicSource {}')});assert.equal(await plugin.text(),'class Demo extends ComicSource {}');assert(plugin.headers.get('content-type').startsWith('text/plain'));
+console.log('PASS: fallback, cache, index URL rewrite, invalid upstream, filename/query boundaries and plugin delivery');

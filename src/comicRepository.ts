@@ -1,4 +1,4 @@
-export const COMIC_REPOSITORY_URL = 'https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json';
+export const COMIC_REPOSITORY_URL = 'https://aokorin.xyz/api/comics/repository/index.json';
 export type ComicRepositoryEntry = {key:string;name:string;version:string;url:string};
 export function parseComicRepository(value:unknown):ComicRepositoryEntry[] {
  if(!Array.isArray(value)||value.length>1000)throw Error('漫画源仓库格式无效');

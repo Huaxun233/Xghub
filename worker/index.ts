@@ -1,3 +1,4 @@
+import { comicRepository } from './comicRepository';
 import { comicState } from './comicState';
 import { refreshIkanbot } from './videoResolver';
 import { MAX_SOURCE_BYTES, parseSource } from "../src/videoCatalog";
@@ -15,6 +16,8 @@ async function api(request: Request, env: Env, url: URL) {
   const origin = request.headers.get("Origin");
   if (method !== "GET" && origin && origin !== url.origin) throw new HttpError(403, "请求来源不匹配");
 
+  const comicFile = /^\/api\/comics\/repository\/([^/]+)$/.exec(pathname);
+  if(comicFile) return comicRepository(request, comicFile[1], {cache:caches.default});
   if (method === "GET" && pathname === "/api/health") {
     await env.DB.prepare("SELECT id FROM catalog_sources LIMIT 1").first();
     return json({ ok: true });
