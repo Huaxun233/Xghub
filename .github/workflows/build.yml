@@ -14,7 +14,7 @@ env:
   GOSUMDB: sum.golang.org
   UPDATE_SERVER_URL: ${{ vars.UPDATE_SERVER_URL }}
   PACKAGE_NAME: ${{ vars.PACKAGE_NAME }}
-  BUNDLED_MODULES: bundled-modules/hongguo
+  BUNDLED_MODULES: bundled-modules/hongguo,bundled-modules/aigo
   PYTHONUTF8: '1'
   PROJECT_URL: ${{ vars.PROJECT_URL }}
   TELEGRAM_GROUP_URL: ${{ vars.TELEGRAM_GROUP_URL }}
@@ -92,6 +92,11 @@ jobs:
         with:
           repository: guoapp-modules/hongguo
           path: bundled-modules/hongguo
+      - &checkout-aigo
+        uses: actions/checkout@v4
+        with:
+          repository: Huaxun233/aigo-module
+          path: bundled-modules/aigo
       - &setup-python
         uses: actions/setup-python@v5
         with:
@@ -166,6 +171,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - *checkout-hongguo
+      - *checkout-aigo
       - *setup-go
       - *setup-python
       - *setup-flutter
@@ -198,6 +204,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - *checkout-hongguo
+      - *checkout-aigo
       - *setup-python
       - *setup-go
       - *setup-flutter
@@ -232,6 +239,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - *checkout-hongguo
+      - *checkout-aigo
       - *setup-python
       - *setup-go
       - *setup-flutter
@@ -280,7 +288,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > notes.md <<EOF
-          版本 ${VERSION}。安装包内置红果站源，其余站源在 设置 › 站源 › 模块管理 的模块商店安装。
+          版本 ${VERSION}。安装包内置红果站源与爱果站源，其余站源在 设置 › 站源 › 模块管理 的模块商店安装。
 
           Android：
           - *-arm64-v8a.apk：适用于较新的安卓设备
