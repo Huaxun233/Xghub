@@ -127,6 +127,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
   const [refreshed, setRefreshed] = useState<Record<string, Series>>({});
   const [refreshing, setRefreshing] = useState(false);
   const sources = platform && platform.section !== "sources" ? [...platform.sources, ...library.sources.filter(local => !platform.sources.some(shared => shared.id === local.id))] : library.sources;
+  const selectedSourceId = sources.some(source => source.id === sourceId) ? sourceId : "";
   const entries = sources.flatMap(source => source.series.map(series => ({
     key: (platform?.sources.includes(source) ? "shared:" : "") + source.id + "/" + series.id, source, series,
   })));
@@ -135,7 +136,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
   const selected = baseSelected ? {...baseSelected, series: refreshed[baseSelected.key] ?? baseSelected.series} : undefined;
   const current = selected?.series.episodes.find(episode => episode.id === selection?.episode);
   const visible = entries.filter(({ key, series, source }) => {
-    if (sourceId && sourceId !== source.id) return false;
+    if (selectedSourceId && selectedSourceId !== source.id) return false;
     if (category && category !== series.category) return false;
     if (view === "followed" && !library.followed.includes(key)) return false;
     if (view === "history" && !library.progress[key]) return false;
@@ -146,7 +147,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
     visible.sort((a, b) => library.progress[b.key].updated - library.progress[a.key].updated);
   }
   const shelves = (platform?.section === "home" || platform?.section === "library") &&
-    view === "all" && !category && !sourceId && !query.trim();
+    view === "all" && !category && !selectedSourceId && !query.trim();
   const groups = new Map<string, Entry[]>();
   if (shelves) for (const entry of visible) {
     const group = groups.get(entry.series.category);
@@ -204,6 +205,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
       setUrl("");
       setView("all");
       setSourceId(LINKS);
+      setCategory("");
       setQuery("");
       select({ key: LINKS + "/" + id, series, source });
     } catch (reason) {
@@ -338,7 +340,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
             .map(item => <button key={item.id} className={view === item.id ? primary : button}
               aria-pressed={view === item.id} onClick={() => { setView(item.id); setSourceId(""); setCategory(""); }}>{item.label}</button>)}
           <div className="flex min-w-0 flex-wrap gap-2 sm:ml-auto">
-            <select aria-label="筛选站源" className={field + " max-w-52"} value={sourceId} onChange={event => setSourceId(event.target.value)}>
+            <select aria-label="筛选站源" className={field + " max-w-52"} value={selectedSourceId} onChange={event => { setSourceId(event.target.value); setCategory(""); }}>
               <option value="">所有站源</option>
               {sources.map(source => <option key={source.id} value={source.id}>{source.name}</option>)}
             </select>
@@ -348,7 +350,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
                 {categories.map(item => <option key={item} value={item}>{item}</option>)}
               </select>
             )}
-            {library.sources.some(source => source.id === sourceId) && <button onClick={removeSource} className={button}>移除所选站源</button>}
+            {library.sources.some(source => source.id === selectedSourceId) && <button onClick={removeSource} className={button}>移除所选站源</button>}
           </div>
           <input className={field} type="search" aria-label="搜索视频库" placeholder="按名称或分类搜索" value={query}
             onChange={event => setQuery(event.target.value)} />
