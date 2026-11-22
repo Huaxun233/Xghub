@@ -5,7 +5,7 @@ import type { Source } from "../videoCatalog";
 const control = "rounded-lg border border-s4 bg-canvas px-3 py-2 text-sm";
 const action = "rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:opacity-50";
 
-export default function RepositorySources({ onLoad, disabled, token, hosted = false }: { onLoad: (source: Source) => void; disabled?: boolean; token?: string; hosted?: boolean }) {
+export default function RepositorySources({ onLoad, onBatch, disabled, token, hosted = false }: { onLoad: (source: Source) => void; onBatch?: (source: Source) => Promise<void>; disabled?: boolean; token?: string; hosted?: boolean }) {
   const [file, setFile] = useState<typeof REPOSITORY_CONFIGS[number]>(REPOSITORY_CONFIGS[0]);
   const [sites, setSites] = useState<RepositorySite[] | null>(null);
   const [selected, setSelected] = useState("");
@@ -55,6 +55,35 @@ export default function RepositorySources({ onLoad, disabled, token, hosted = fa
       (result.errors.length > 3 ? " 等 " + result.errors.length + " 项" : ""));
   }
 
+  async function importAll() {
+    if (!compatible.length) return;
+    const total = compatible.length;
+    const imported: string[] = [];
+    const failures: string[] = [];
+    for (let index = 0; index < total; index += 1) {
+      const current = compatible[index];
+      setMessage(`正在导入 ${current.name}（${index + 1}/${total}）…`);
+      try {
+        const result = await importRepositoryBatch(current, 1, 50, {
+          read: token || hosted ? async (start, batchSize) => {
+            const query = new URLSearchParams({ file, site: current.key, start: String(start), count: String(batchSize) });
+            return (await readFromServer(query)).pages;
+          } : undefined,
+        });
+        if (onBatch) await onBatch(result.source);
+        else onLoad(result.source);
+        imported.push(`${current.name}（${result.source.series.length} 部${result.resumePage ? `，可从第 ${result.resumePage} 页继续` : ""}）`);
+        if (result.errors.length) failures.push(`${current.name}：${result.errors.length} 页失败`);
+      } catch (failure) {
+        failures.push(`${current.name}：${(failure as Error).message}`);
+      }
+    }
+    setMessage(`一键导入完成：成功 ${imported.length}/${total}。` +
+      (imported.length ? "已导入：" + imported.join("；") + "。" : "") +
+      (onBatch ? "全部已直接发布。" : ""));
+    if (failures.length) setError(failures.join("；"));
+  }
+
   return (
     <details className="space-y-3 rounded-xl border border-s3 bg-s1 p-3">
       <summary className="cursor-pointer text-sm font-semibold">仓库站源</summary>
@@ -74,6 +103,9 @@ export default function RepositorySources({ onLoad, disabled, token, hosted = fa
           setSelected(result.find(option => option.endpoint)?.key ?? "");
           setMessage("已同步 " + result.length + " 个站点，" + count + " 个可尝试导入。");
         })}>{busy ? "正在读取…" : "同步仓库源"}</button>
+        {sites && compatible.length > 0 && <button type="button" className={action}
+          disabled={busy || disabled}
+          onClick={() => void run(importAll)}>{busy ? "正在处理…" : "一键导入全部"}</button>}
         <a href={REPOSITORY} target="_blank" rel="noreferrer" className="px-1 py-2 text-sm text-mut underline">配置仓库</a>
       </div>
       {sites && compatible.length > 0 && <div className="flex flex-wrap items-end gap-2">

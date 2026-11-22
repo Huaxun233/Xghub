@@ -214,6 +214,9 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
               <RepositorySources token={token} disabled={busy} onLoad={source => {
                 setInput(JSON.stringify(source));
                 setStatus("仓库站源已载入编辑框。确认内容后可保存并发布。");
+              }} onBatch={async source => {
+                await api("admin/catalog/" + source.id, { method: "PUT", body: source, token });
+                await reload();
               }} />
               <div className="flex flex-wrap gap-2">
                 <label className={button + " cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
