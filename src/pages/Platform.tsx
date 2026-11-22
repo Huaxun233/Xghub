@@ -211,8 +211,8 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
               <SourceUrlInput disabled={busy} successHint="内容已填入下方编辑框，点「保存并发布」后才会出现在片库。"
                 onLoad={source => setInput(JSON.stringify(source, null, 2))} />
               <GuoModules />
-              <RepositorySources disabled={busy} onLoad={source => {
-                setInput(JSON.stringify(source, null, 2));
+              <RepositorySources token={token} disabled={busy} onLoad={source => {
+                setInput(JSON.stringify(source));
                 setStatus("仓库站源已载入编辑框。确认内容后可保存并发布。");
               }} />
               <div className="flex flex-wrap gap-2">

@@ -1,3 +1,4 @@
+import { videoRepositoryPages } from "./videoRepository";
 import { project } from './project';
 import { comicRepository } from './comicRepository';
 import { comicState } from './comicState';
@@ -16,6 +17,11 @@ async function api(request: Request, env: Env, url: URL) {
   const method = request.method;
   const origin = request.headers.get("Origin");
   if (method !== "GET" && origin && origin !== url.origin) throw new HttpError(403, "请求来源不匹配");
+
+  if (method === "GET" && pathname === "/api/admin/video-repository/pages") {
+    await requireAdmin(request, env, "admin-video-repository");
+    return videoRepositoryPages(url);
+  }
 
   const projectResponse = await project(request, env, url);
   if (projectResponse) return projectResponse;

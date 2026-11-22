@@ -11,11 +11,11 @@ async function digest(value: string) {
   return crypto.subtle.digest("SHA-256", encode.encode(value));
 }
 
-export async function requireAdmin(request: Request, env: Env) {
+export async function requireAdmin(request: Request, env: Env, scope = "admin") {
   if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.length < 20) {
     throw new HttpError(503, "站点管理员尚未配置管理密钥");
   }
-  await limit(env, "admin:" + clientAddress(request));
+  await limit(env, scope + ":" + clientAddress(request));
   const header = request.headers.get("Authorization") || "";
   if (!header.startsWith("Bearer ") || header.length > 1024 ||
       !crypto.subtle.timingSafeEqual(await digest(header.slice(7)), await digest(env.ADMIN_TOKEN))) {
