@@ -2,8 +2,10 @@
   <img src="public/logo.svg" width="112" height="112" alt="玄果 Xghub 软件图标" />
   <h1>玄果 · Xghub</h1>
   <p>面向 Windows、Android 和浏览器的视频播放器与片库。</p>
-  <p><a href="https://hghub-video.huangguo-client.workers.dev">在线体验</a> · <a href="https://github.com/Huaxun233/Xghub/releases/latest">下载安装包</a> · <a href="docs/usage.md">中英文完整说明</a></p>
+  <p><a href="https://aokorin.xyz">在线体验</a> · <a href="https://github.com/Huaxun233/Xghub/releases/latest">下载安装包</a> · <a href="docs/usage.md">中英文完整说明</a></p>
 </div>
+
+网页版已提供影视、漫画、书架和账号入口，详见 [网页版使用与兼容性 / Web guide](docs/web-platform.md)。
 
 ## 关于玄果
 
@@ -20,7 +22,7 @@
 | Windows | 从 [Releases](https://github.com/Huaxun233/Xghub/releases) 下载 x64 安装程序，也可以使用便携 ZIP。 |
 | Android | 大多数手机选 ARM64 APK。覆盖安装要求新旧包的签名一致。 |
 | 静态网页 | 解压网页 ZIP，用静态 HTTP 服务打开。在首页导入 [JSON 站源](public/video-source.example.json) 或添加 HTTPS 视频直链。 |
-| 在线网页 | 打开 [玄果](https://hghub-video.huangguo-client.workers.dev)，从侧边栏浏览内容。新账号注册需管理员提供邀请码。 |
+| 在线网页 | 打开 [玄果](https://aokorin.xyz)，从侧边栏浏览内容。新账号注册需管理员提供邀请码。 |
 
 原生客户端可在侧栏打开 **视频库** 导入站源。同一站源更新时，保留站源 ID 可延续追剧与观看记录。仅添加你有权使用和分享的媒体，HLS 服务器需允许播放器读取播放清单及分片。
 
@@ -30,7 +32,7 @@ Xghub is a video player and library for Windows, Android, and the browser. Use t
 
 1. Download the x64 installer or portable ZIP for Windows, or the ARM64 APK for most Android phones. Android updates require the same signing certificate. [Downloads](https://github.com/Huaxun233/Xghub/releases)
 2. Open **Video Library** in the native app to import a [JSON source](public/video-source.example.json) or add an HTTPS MP4 or M3U8 link. For the static web ZIP, extract it, serve it over HTTP, and import a source from the home page.
-3. Use the hosted site to browse published sources. New accounts require an invitation code. Watchlists and playback progress are stored on the current device or browser. [Hosted site](https://hghub-video.huangguo-client.workers.dev)
+3. Use the hosted site to browse published sources. New accounts require an invitation code. Watchlists and playback progress are stored on the current device or browser. [Hosted site](https://aokorin.xyz)
 
 ## 本地开发 / Development
 

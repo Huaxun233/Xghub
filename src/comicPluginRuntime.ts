@@ -1,4 +1,5 @@
-export type ComicPluginInfo = {key: string; name: string; version: string};
+import htmlBridge from './comicHtmlBundle.js?raw';
+export type ComicPluginInfo = {key: string; name: string; version: string; options?: {options:string[]}[]};
 // Data-URL workers have an opaque origin and cannot access document cookies or storage.
 export class ComicPluginRuntime {
   private worker: Worker;
@@ -10,9 +11,10 @@ export class ComicPluginRuntime {
     const match = /class\s+([A-Za-z_$][\w$]*)\s+extends\s+ComicSource\b/.exec(script);
     if (!match) throw new Error('没有找到 VeneraX ComicSource 插件类');
     const code = `
+      ${htmlBridge}
       const nativeFetch = fetch.bind(globalThis);
       globalThis.fetch = (url, options={}) => nativeFetch(url, {...options, credentials:'omit', referrerPolicy:'no-referrer'});
-      class ComicSource {loadData(k){return this.data?.[k]??null;} saveData(k,v){(this.data??={})[k]=v;} deleteData(k){delete this.data?.[k];} loadSetting(){return null;} get isLogged(){return false;}}
+      class ComicSource {loadData(k){return this.data?.[k]??null;} saveData(k,v){(this.data??={})[k]=v;} deleteData(k){delete this.data?.[k];} loadSetting(key){return this.settings?.[key]?.default ?? null;} get isLogged(){return false;}}
       const Convert={
         encodeUtf8:value=>new TextEncoder().encode(value).buffer,
         decodeUtf8:value=>new TextDecoder().decode(value),
@@ -21,9 +23,12 @@ export class ComicPluginRuntime {
         hexEncode:value=>Array.from(new Uint8Array(value),byte=>byte.toString(16).padStart(2,'0')).join(''),
         hexDecode:value=>{if(typeof value!=='string'||value.length%2||!/^[a-fA-F0-9]*$/.test(value))throw Error('无效十六进制');return Uint8Array.from(value.match(/.{2}/g)||[],part=>parseInt(part,16)).buffer}
       };
+      Object.assign(Convert,globalThis.ComicHashes);
+      Convert.hmacString=(key,value,hash)=>Convert.hexEncode(Convert.hmac(key,value,hash));
       function createUuid(){return crypto.randomUUID()}
       function randomInt(min,max){return Math.floor(Math.random()*(max-min))+min}
       function randomDouble(min,max){return Math.random()*(max-min)+min}
+      const APP={locale:'zh_CN',version:'3.0.2',platform:'web'};
       function Comic(v){Object.assign(this,v)}
       function ComicDetails(v){Object.assign(this,v)}
       const request = async(method,url,headers,data,bytes=false)=>{
@@ -38,10 +43,12 @@ export class ComicPluginRuntime {
       const Network={sendRequest:request,request,fetchBytes:(method,url,headers,data)=>request(method,url,headers,data,true),get:(url,headers)=>request('GET',url,headers),post:(url,headers,data)=>request('POST',url,headers,data),put:(url,headers,data)=>request('PUT',url,headers,data),patch:(url,headers,data)=>request('PATCH',url,headers,data),delete:(url,headers,data)=>request('DELETE',url,headers,data)};
       ${script}
       const source = new ${match[1]}();
-      onmessage=async({data:m})=>{try{let value;if(m.action==='info')value={key:source.key,name:source.name,version:source.version};else if(m.action==='search')value=await source.search.load(...m.args);else if(m.action==='infoComic')value=await source.comic.loadInfo(...m.args);else if(m.action==='pages')value=await source.comic.loadEp(...m.args);else throw Error('未知插件操作');postMessage({id:m.id,value});}catch(e){postMessage({id:m.id,error:String(e.message||e)})}};
+      const ready = new Promise(resolve => {globalThis.restoreSource = stored => {source.data=stored || {};resolve()}}).then(()=>source.init?.());
+      postMessage({action:'restore-request',sourceKey:source.key});
+      onmessage=async({data:m})=>{try{if(m.action==='restore'){globalThis.restoreSource(m.data);return;}await ready;let value;if(m.action==='info')value={key:source.key,name:source.name,version:source.version, options:(source.search?.optionList || []).map(item=>({options:item.options || []}))};else if(m.action==='search')value=await source.search.load(m.args[0], m.args[2]?.length ? m.args[2] : (source.search.optionList || []).map(item => String(item.options?.[0] ?? 'any').split('-')[0]), m.args[1]);else if(m.action==='infoComic')value=await source.comic.loadInfo(...m.args);else if(m.action==='pages')value=await source.comic.loadEp(...m.args);else throw Error('未知插件操作');postMessage({id:m.id,value,sourceKey:source.key,storage:source.data});}catch(e){postMessage({id:m.id,error:String(e.message||e)})}};
     `;
     this.worker = new Worker('data:text/javascript;charset=utf-8,' + encodeURIComponent(code));
-    this.worker.onmessage = ({data}) => {const request=this.pending.get(data.id);if(!request)return;clearTimeout(request.timer);this.pending.delete(data.id);data.error?request.reject(new Error(data.error)):request.resolve(data.value);};
+    this.worker.onmessage = ({data}) => {if(data.action==='restore-request'){let stored:unknown={};try{stored=JSON.parse(localStorage.getItem('xghub.plugin.data.'+data.sourceKey)||'{}')}catch{}this.worker.postMessage({action:'restore',data:stored});return;}if(data.sourceKey && data.storage) {try {const text=JSON.stringify(data.storage);if(text.length<=524288)localStorage.setItem('xghub.plugin.data.'+data.sourceKey,text);}catch{}}const request=this.pending.get(data.id);if(!request)return;clearTimeout(request.timer);this.pending.delete(data.id);data.error?request.reject(new Error(data.error)):request.resolve(data.value);};
     this.worker.onerror = () => this.dispose(new Error('漫画插件执行失败，可能使用了尚未适配的原生接口'));
   }
   call<T>(action: 'info'|'search'|'infoComic'|'pages', ...args: unknown[]): Promise<T> {
@@ -51,3 +58,4 @@ export class ComicPluginRuntime {
   }
   dispose(error=new Error('漫画插件已关闭')) {this.closed=true;this.worker.terminate();for(const item of this.pending.values()){clearTimeout(item.timer);item.reject(error);}this.pending.clear();}
 }
+

@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && tsc --project tsconfig.tests.json && vite build",
-    "build:web": "tsc --noEmit && vite build --mode web --outDir dist-web",
-    "build:worker": "tsc --noEmit && tsc --project tsconfig.worker.json && vite build --mode worker --outDir dist-worker",
+    "build": "node scripts/build-comic-html.mjs && tsc --noEmit && tsc --project tsconfig.tests.json && vite build",
+    "build:web": "node scripts/build-comic-html.mjs && tsc --noEmit && vite build --mode web --outDir dist-web",
+    "build:worker": "node scripts/build-comic-html.mjs && tsc --noEmit && tsc --project tsconfig.worker.json && vite build --mode worker --outDir dist-worker",
     "worker:dev": "wrangler dev --ip 127.0.0.1",
     "worker:deploy": "pnpm build:worker && wrangler deploy",
     "preview": "vite preview",
@@ -20,7 +20,8 @@
     "android:init": "tauri android init",
     "android:icons": "node scripts/sync-android-icons.mjs",
     "android:dev": "tauri android dev",
-    "android:build": "tauri android build"
+    "android:build": "tauri android build",
+    "build:comic-html": "node scripts/build-comic-html.mjs"
   },
   "dependencies": {
     "@noble/hashes": "2.4.0",
@@ -28,6 +29,7 @@
     "clsx": "2.1.1",
     "dompurify": "3.4.17",
     "hls.js": "1.6.19",
+    "linkedom": "^0.18.15",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "tailwind-merge": "3.4.0"

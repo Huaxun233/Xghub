@@ -1,4 +1,5 @@
-import Comics from './Comics';
+import { lazy, Suspense } from 'react';
+const Comics = lazy(() => import('./Comics'));
 import GuoModules from "../components/GuoModules";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Logo } from "../icons";
@@ -354,7 +355,7 @@ export default function Platform() {
           <div className="mt-auto"><WebTheme /></div>
       </aside>
       <main className="relative min-w-0 flex-1">
-        {section === "comics" ? <Comics /> : section === "home" || section === "library" || section === "search" ? (
+        {section === "comics" ? <Suspense fallback={<p role="status" className="p-8 text-mut">正在加载漫画阅读器…</p>}><Comics /></Suspense> : section === "home" || section === "library" || section === "search" ? (
           <Videos active platform={{ section, sources, loading, error, reload: () => void load() }} />
         ) : (
           <div className="absolute inset-0 scroll-y">
