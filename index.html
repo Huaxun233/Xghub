@@ -9,6 +9,7 @@
     <title>Xghub · 玄果</title>
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%logo.svg" />
     <script>
+      if(location.pathname === "/" && !location.hash){document.documentElement.classList.add("m-enter");setTimeout(()=>document.documentElement.classList.add("m-enter-done"),1500);}
       try {
         if (localStorage.getItem("hghub_theme") === "light") document.documentElement.classList.add("theme-light");
       } catch (e) {}
