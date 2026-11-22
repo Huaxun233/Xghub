@@ -5,7 +5,7 @@ import type { Source } from "../videoCatalog";
 const control = "rounded-lg border border-s4 bg-canvas px-3 py-2 text-sm";
 const action = "rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:opacity-50";
 
-export default function RepositorySources({ onLoad, disabled, token }: { onLoad: (source: Source) => void; disabled?: boolean; token?: string }) {
+export default function RepositorySources({ onLoad, disabled, token, hosted = false }: { onLoad: (source: Source) => void; disabled?: boolean; token?: string; hosted?: boolean }) {
   const [file, setFile] = useState<typeof REPOSITORY_CONFIGS[number]>(REPOSITORY_CONFIGS[0]);
   const [sites, setSites] = useState<RepositorySite[] | null>(null);
   const [selected, setSelected] = useState("");
@@ -28,8 +28,9 @@ export default function RepositorySources({ onLoad, disabled, token }: { onLoad:
   }
 
   async function readFromServer(query: URLSearchParams) {
-    const response = await fetch("/api/admin/video-repository/pages?" + query, {
-      headers: { Authorization: "Bearer " + token },
+    const endpoint = token ? "/api/admin/video-repository/pages" : "/api/video-repository/pages";
+    const response = await fetch(endpoint + "?" + query, {
+      headers: token ? { Authorization: "Bearer " + token } : undefined,
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error ?? "后台读取源站失败");
@@ -40,7 +41,7 @@ export default function RepositorySources({ onLoad, disabled, token }: { onLoad:
     if (!site) return;
     const result = await importRepositoryBatch(site, page, count, {
       progress: (current, titles) => setMessage(`正在读取第 ${current} 页，已收录 ${titles} 部。`),
-      read: token ? async (start, batchSize) => {
+      read: token || hosted ? async (start, batchSize) => {
         const query = new URLSearchParams({ file, site: site.key, start: String(start), count: String(batchSize) });
         return (await readFromServer(query)).pages;
       } : undefined,
@@ -65,7 +66,7 @@ export default function RepositorySources({ onLoad, disabled, token }: { onLoad:
           }}>{REPOSITORY_CONFIGS.map(item => <option key={item}>{item}</option>)}</select>
         </label>
         <button type="button" className={action} disabled={busy || disabled} onClick={() => void run(async () => {
-          const result: RepositorySite[] = token
+          const result: RepositorySite[] = token || hosted
             ? (await readFromServer(new URLSearchParams({ file }))).sites
             : await syncRepository(file);
           const count = result.filter(option => option.endpoint).length;

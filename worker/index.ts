@@ -1,4 +1,5 @@
-import { videoRepositoryPages } from "./videoRepository";
+import { videoRepositoryPages, readUpstream } from "./videoRepository";
+import { GUO_MODULE_INDEX, parseGuoModules } from "../src/guoModuleIndex";
 import { project } from './project';
 import { comicRepository } from './comicRepository';
 import { comicState } from './comicState';
@@ -6,7 +7,7 @@ import { refreshIkanbot } from './videoResolver';
 import { MAX_SOURCE_BYTES, parseSource } from "../src/videoCatalog";
 import { account, requireAdmin } from "./accounts";
 import { invites } from "./invites";
-import { HttpError, json, jsonHeaders, readJson, type Env } from "./http";
+import { HttpError, json, jsonHeaders, readJson, clientAddress, limit, type Env } from "./http";
 export { PasswordHasher } from "./passwordHasher";
 
 const MAX_PUBLIC_SOURCES = 16;
@@ -21,6 +22,20 @@ async function api(request: Request, env: Env, url: URL) {
   if (method === "GET" && pathname === "/api/admin/video-repository/pages") {
     await requireAdmin(request, env, "admin-video-repository");
     return videoRepositoryPages(url);
+  }
+
+  if (method === "GET" && pathname === "/api/video-repository/pages") {
+    await limit(env, "public-video-repository:" + clientAddress(request));
+    return videoRepositoryPages(url);
+  }
+  if (method === "GET" && pathname === "/api/guo-modules") {
+    await limit(env, "guo-module-index:" + clientAddress(request));
+    try {
+      const modules = parseGuoModules(JSON.parse(await readUpstream(new URL(GUO_MODULE_INDEX))));
+      return json({ modules }, 200, { "Cache-Control": "public, max-age=120" });
+    } catch {
+      throw new HttpError(502, "小果模块仓库暂时无法读取");
+    }
   }
 
   const projectResponse = await project(request, env, url);

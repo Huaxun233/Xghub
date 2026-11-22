@@ -14,9 +14,9 @@ const worker = import.meta.env.MODE === "worker";
 if (worker && location.pathname === "/" && location.hash === "#admin") {
   location.replace("/admin");
 }
-if (worker && location.pathname === '/' && /^#(home|comics|library|search|account)$/.test(location.hash)) history.replaceState(null, '', '/app' + location.hash);
+if (worker && location.pathname === '/' && /^#(home|comics|library|search|account|sources)$/.test(location.hash)) history.replaceState(null, '', '/app' + location.hash);
 if (worker) window.addEventListener('hashchange', () => {
- if(location.pathname === '/' && /^#(home|comics|library|search|account|admin)$/.test(location.hash)) location.replace(location.hash === '#admin' ? '/admin' : '/app' + location.hash);
+ if(location.pathname === '/' && /^#(home|comics|library|search|account|sources|admin)$/.test(location.hash)) location.replace(location.hash === '#admin' ? '/admin' : '/app' + location.hash);
 });
 const native = !worker && isTauri();
 if (native) {

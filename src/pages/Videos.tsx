@@ -90,7 +90,7 @@ function Playback({ episode, start, save }: {
 }
 
 type PlatformCatalog = {
-  section: "home" | "library" | "search" | "personal";
+  section: "home" | "library" | "search" | "personal" | "sources";
   sources: Source[];
   loading: boolean;
   error: string;
@@ -100,6 +100,7 @@ type PlatformCatalog = {
 export default function Videos({ active, bottomInset = 0, platform }: {
   active: boolean; bottomInset?: number; platform?: PlatformCatalog;
 }) {
+  const canImport = !platform || platform.section === "sources" || platform.section === "personal";
   const [library, setLibrary] = useState(readLibrary);
   const latest = useRef(library);
   const [view, setView] = useState<View>(platform?.section === "personal" ? "history" : "all");
@@ -125,7 +126,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
   };
   const [refreshed, setRefreshed] = useState<Record<string, Series>>({});
   const [refreshing, setRefreshing] = useState(false);
-  const sources = platform ? [...platform.sources, ...library.sources.filter(local => !platform.sources.some(shared => shared.id === local.id))] : library.sources;
+  const sources = platform && platform.section !== "sources" ? [...platform.sources, ...library.sources.filter(local => !platform.sources.some(shared => shared.id === local.id))] : library.sources;
   const entries = sources.flatMap(source => source.series.map(series => ({
     key: (platform?.sources.includes(source) ? "shared:" : "") + source.id + "/" + series.id, source, series,
   })));
@@ -168,6 +169,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
       ...previous, sources: [...previous.sources.filter(item => item.id !== source.id), source],
     }));
     setSourceId(source.id);
+    setCategory("");
     setView("all");
     setQuery("");
     setMessage("已导入 " + source.name);
@@ -253,9 +255,9 @@ export default function Videos({ active, bottomInset = 0, platform }: {
       style={{ paddingTop: "calc(var(--sat, 0px) + 20px)", paddingBottom: "calc(var(--sab, 0px) + " + (bottomInset + 24) + "px)" }}>
       <div className="mx-auto max-w-[1500px] space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">{platform?.section === "home" ? "首页" : platform?.section === "library" ? "分类" : platform?.section === "search" ? "搜索" : platform?.section === "personal" ? "我的片单" : "视频库"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{platform?.section === "home" ? "首页" : platform?.section === "library" ? "分类" : platform?.section === "search" ? "搜索" : platform?.section === "personal" ? "我的片单" : platform?.section === "sources" ? "站源管理" : "视频库"}</h1>
           {platform?.section === "library" && categories.length > 0 && <span className="text-sm text-mut">{categories.length} 个分类</span>}
-          {(!platform || platform.section === "personal") && <label className={button + " relative cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
+          {canImport && <label className={button + " relative cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
             导入站源
             <input className="sr-only" aria-label="导入站源" type="file" accept=".json,application/json"
               onChange={event => {
@@ -265,10 +267,8 @@ export default function Videos({ active, bottomInset = 0, platform }: {
               }} />
           </label>}
         </div>
-        {(!platform || platform.section === "personal") && <SourceUrlInput onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
-        {!platform && <GuoModules />}
-        {!platform && <RepositorySources onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
-        {(!platform || platform.section === "personal") && <form onSubmit={addLink} className="grid gap-2 rounded-(--r-md) bg-s1 p-3 sm:grid-cols-[1fr_2fr_auto]">
+        {canImport && <SourceUrlInput onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
+        {canImport && <form onSubmit={addLink} className="grid gap-2 rounded-(--r-md) bg-s1 p-3 sm:grid-cols-[1fr_2fr_auto]">
           <input className={field} aria-label="视频名称" placeholder="视频名称（选填）" value={title}
             onChange={event => setTitle(event.target.value)} maxLength={120} />
           <input className={field} aria-label="HTTPS 播放地址" placeholder="HTTPS 视频直链（MP4 或 M3U8）"
@@ -277,7 +277,15 @@ export default function Videos({ active, bottomInset = 0, platform }: {
         </form>}
         {error && <p role="alert" className="text-sm text-danger">{error}</p>}
         {message && <p role="status" className="text-sm text-mut">{message}</p>}
-        {platform?.error && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-danger">
+        {(!platform || platform.section === "sources") && <>
+          <RepositorySources hosted={Boolean(platform)} onLoad={source => {
+            setError("");
+            setMessage("");
+            applyImportedSource(source);
+          }} />
+          <GuoModules hosted={Boolean(platform)} />
+        </>}
+        {platform?.error && platform.section !== "sources" && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-danger">
           {platform.error}<button className={button} onClick={platform.reload}>重试</button>
         </div>}
 

@@ -2,7 +2,7 @@ import { parseRepositoryConfig, REPOSITORY_CONFIGS, repositoryPageUrl } from "..
 import { MAX_SOURCE_BYTES } from "../src/videoCatalog";
 import { HttpError, json } from "./http";
 
-async function readUpstream(url: URL) {
+export async function readUpstream(url: URL) {
   const response = await fetch(url, {
     redirect: "manual",
     signal: AbortSignal.timeout(7000),

@@ -18,7 +18,7 @@ const panel = "space-y-3 rounded-(--r-md) border border-s3 bg-s1 p-4";
 type User = { username: string };
 type AccountPage = { accounts: (User & { id: number; created_at: number; invite_code: string | null })[]; next: number | null };
 type Invite = { code: string; max_uses: number; used: number; active: number };
-type Section = "comics" | "home" | "library" | "search" | "account" | "admin";
+type Section = "comics" | "home" | "library" | "search" | "account" | "sources" | "admin";
 
 async function api<T>(path: string, options?: { method?: string; body?: unknown; token?: string; signal?: AbortSignal }): Promise<T> {
   const headers = new Headers({ Accept: "application/json" });
@@ -210,7 +210,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
             <form onSubmit={save} className="space-y-3">
               <SourceUrlInput disabled={busy} successHint="内容已填入下方编辑框，点「保存并发布」后才会出现在片库。"
                 onLoad={source => setInput(JSON.stringify(source, null, 2))} />
-              <GuoModules />
+              <GuoModules hosted />
               <RepositorySources token={token} disabled={busy} onLoad={source => {
                 setInput(JSON.stringify(source));
                 setStatus("仓库站源已载入编辑框。确认内容后可保存并发布。");
@@ -308,7 +308,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
 function currentSection(): Section {
   if (window.location.pathname === "/admin" || window.location.pathname === "/admin/") return "admin";
   const selection = window.location.hash.slice(1);
-  return selection === "comics" || selection === "library" || selection === "search" || selection === "account" ? selection : "home";
+  return selection === "comics" || selection === "library" || selection === "search" || selection === "account" || selection === "sources" ? selection : "home";
 }
 
 export default function Platform() {
@@ -349,7 +349,7 @@ export default function Platform() {
           {section === "admin" ? <a href="/" className="text-sm text-mut hover:text-on">返回网站</a> : (
           <nav aria-label="主导航" className="grid gap-1">
             {([{ id: "home", label: "影视" }, { id: "comics", label: "漫画" }, { id: "library", label: "分类" },
-              { id: "search", label: "搜索" }, { id: "account", label: "我的" }] as const)
+              { id: "search", label: "搜索" }, { id: "sources", label: "站源" }, { id: "account", label: "我的" }] as const)
               .map(item => <a key={item.id} href={"#" + item.id} aria-current={section === item.id ? "page" : undefined}
                 className={"rounded-lg px-2 py-3 text-center text-sm sm:text-left " + (section === item.id ? "bg-pc text-on-pc font-semibold" : "text-mut hover:bg-s3")}>{item.label}</a>)}
           </nav>
@@ -357,12 +357,12 @@ export default function Platform() {
           <div className="mt-auto grid gap-2">
             <a className={button + ' text-center'} href="https://github.com/Huaxun233/Xghub/releases/download/xghub-v2.1.3-119/xghub-2.1.3%2B119-arm64-v8a.apk" target="_blank" rel="noopener noreferrer" aria-label="下载 Android 手机版">Android 下载</a>
             <a className={button + ' text-center'} href="https://github.com/Huaxun233/Xghub/releases/download/xghub-v2.1.3-119/xghub-2.1.3%2B119-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer" aria-label="下载 Windows 版">Windows 下载</a>
-            <a className={button + ' text-center'} href="https://github.com/Huaxun233" target="_blank" rel="noopener noreferrer">作者主页</a>
+            <a className={button + ' text-center'} href="/">项目主页</a>
             <WebTheme />
           </div>
       </aside>
       <main className="relative min-w-0 flex-1">
-        {section === "comics" ? <Suspense fallback={<p role="status" className="p-8 text-mut">正在加载漫画阅读器…</p>}><Comics /></Suspense> : section === "home" || section === "library" || section === "search" ? (
+        {section === "comics" ? <Suspense fallback={<p role="status" className="p-8 text-mut">正在加载漫画阅读器…</p>}><Comics /></Suspense> : section === "home" || section === "library" || section === "search" || section === "sources" ? (
           <Videos active platform={{ section, sources, loading, error, reload: () => void load() }} />
         ) : (
           <div className="absolute inset-0 scroll-y">
