@@ -23,6 +23,11 @@ An open-source video and comics client for Android and Windows.
 
 ## 玄果使用指南 · Xghub Quick Start
 
+漫画源管理内置 Venera configs 仓库：打开仓库后多选或全选未安装源，再点击批量安装。每个源显示安装结果，失败条目保留选择以便重试。仓库地址可编辑或删除；已有自定义仓库会保留。漫画页面显示「玄果漫画 · 基于 VeneraX」。
+
+The comic source manager includes the Venera configs repository. Select sources (or all uninstalled sources), then batch install them with individual results. Existing custom repositories are preserved, and the built-in repository can be edited or removed. The reader is branded Xghub Comics, based on VeneraX.
+
+
 从 [玄果 Releases](https://github.com/Huaxun233/Xghub/releases) 下载。Android 手机通常选择 ARM64 APK。Windows x64 可以选安装程序或便携 ZIP。
 
 - **影视**：打开「影视」，通过「我的 → 模块」管理内容源，在影视页发现、搜索和播放。
