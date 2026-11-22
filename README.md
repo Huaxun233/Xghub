@@ -9,7 +9,7 @@
 
 ## 关于玄果
 
-玄果基于 Tauri 2、Rust 和 React，提供视频浏览、分类搜索和个人片单。Windows 与 Android 客户端支持原项目线路，也可以导入自己的 JSON 站源或添加 HTTPS 视频直链。在线版提供独立的邀请制账号和管理后台，服务器部署源码见 Cloudflare 分支。
+本分支提供 React 网页端与 Cloudflare Workers / D1 后端，包含影视、玄果漫画、分类搜索、个人片单、邀请制账号及独立后台。Android 和 Windows 的 Flutter 客户端源码见 [客户端分支](https://github.com/Huaxun233/Xghub/tree/codex/guoapp-client)。三端内置 Venera configs 漫画源仓库，支持按需批量安装；网页端的第三方源受浏览器跨域和接口兼容性限制。
 
 - **浏览与播放**　从侧边栏打开首页、分类、搜索和「我的」，支持 MP4、HLS（M3U8）和选集。
 - **个人片单**　收藏追剧与续播进度保存在当前设备或浏览器，可以切换淡粉浅色主题和深色主题。
@@ -28,7 +28,7 @@
 
 ## English
 
-Xghub is a video player and library for Windows, Android, and the browser. Use the sidebar to browse categories, search, open your watchlist, and switch between light and dark mode.
+This branch contains the React web app and Cloudflare Workers / D1 backend. Android and Windows use the Flutter client branch. The web sidebar includes video, comics, downloads and the author GitHub profile. All three platforms include the Venera configs repository with batch installation; web source compatibility depends on browser CORS and supported APIs.
 
 1. Download the x64 installer or portable ZIP for Windows, or the ARM64 APK for most Android phones. Android updates require the same signing certificate. [Downloads](https://github.com/Huaxun233/Xghub/releases)
 2. Open **Video Library** in the native app to import a [JSON source](public/video-source.example.json) or add an HTTPS MP4 or M3U8 link. For the static web ZIP, extract it, serve it over HTTP, and import a source from the home page.
