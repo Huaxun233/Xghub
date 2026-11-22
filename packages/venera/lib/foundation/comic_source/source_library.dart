@@ -4,6 +4,11 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:venera/foundation/appdata.dart';
 
+const xghubComicRepositoryUrl =
+    'https://aokorin.xyz/api/comics/repository/index.json';
+const _legacyXghubComicRepositoryUrl =
+    'https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json';
+
 /// A remote catalog of comic sources (an `index.json` URL). The app can hold
 /// many of these at once; they drive discovery and update resolution. The
 /// installed copy of a source is still single-per-key on disk — libraries only
@@ -587,12 +592,26 @@ class ComicSourceLibraryManager {
       appdata.saveData(false);
     }
     if (appdata.settings['xghubBuiltinComicLibraryV1'] != true) {
-      add(
-        'Venera configs',
-        'https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json',
+      final hasBuiltin = all().any(
+        (library) =>
+            canonicalLibraryUrl(library.url) ==
+                canonicalLibraryUrl(xghubComicRepositoryUrl) ||
+            canonicalLibraryUrl(library.url) ==
+                canonicalLibraryUrl(_legacyXghubComicRepositoryUrl),
       );
+      if (!hasBuiltin) add('Venera configs', xghubComicRepositoryUrl);
       appdata.settings['xghubBuiltinComicLibraryV1'] = true;
       appdata.saveData(false);
     }
+    final currentLibraries = all();
+    var changed = false;
+    for (final library in currentLibraries) {
+      if (canonicalLibraryUrl(library.url) ==
+          canonicalLibraryUrl(_legacyXghubComicRepositoryUrl)) {
+        library.url = xghubComicRepositoryUrl;
+        changed = true;
+      }
+    }
+    if (changed) save(currentLibraries);
   }
 }

@@ -23,7 +23,11 @@ An open-source video and comics client for Android and Windows.
 
 ## 玄果使用指南 · Xghub Quick Start
 
+漫画源管理内置 Venera configs 仓库，默认通过 [本站转发地址](https://aokorin.xyz/api/comics/repository/index.json) 读取目录与插件，后端带备用上游及缓存。升级会自动替换旧内置地址并保留自定义仓库；此转发不代理漫画内容和图片。
+
 漫画源管理内置 Venera configs 仓库：打开仓库后多选或全选未安装源，再点击批量安装。每个源显示安装结果，失败条目保留选择以便重试。仓库地址可编辑或删除；已有自定义仓库会保留。漫画页面显示「玄果漫画 · 基于 VeneraX」。
+
+The built-in repository uses [the Xghub relay](https://aokorin.xyz/api/comics/repository/index.json) for index and plugin downloads, with upstream fallback and caching. Existing built-in URLs migrate while custom libraries are preserved. Comic content and images are not proxied.
 
 The comic source manager includes the Venera configs repository. Select sources (or all uninstalled sources), then batch install them with individual results. Existing custom repositories are preserved, and the built-in repository can be edited or removed. The reader is branded Xghub Comics, based on VeneraX.
 

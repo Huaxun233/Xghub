@@ -45,8 +45,7 @@ void main() {
     );
     final builtin = ComicSourceLibraryManager.all().singleWhere(
       (library) =>
-          library.url ==
-          'https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json',
+          library.url == 'https://aokorin.xyz/api/comics/repository/index.json',
     );
     ComicSourceLibraryManager.migrateIfNeeded();
     expect(
@@ -55,9 +54,62 @@ void main() {
           .length,
       1,
     );
+    final countBeforeMigration = ComicSourceLibraryManager.all().length;
+    ComicSourceLibraryManager.edit(
+      builtin.id,
+      name: '我的漫画库',
+      url:
+          'https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json',
+    );
+    ComicSourceLibraryManager.setEnabled(builtin.id, false);
+    ComicSourceLibraryManager.recordOrigin('migration-fixture', builtin.id);
+    ComicSourceLibraryManager.migrateIfNeeded();
+    final migrated = ComicSourceLibraryManager.find(builtin.id)!;
+    expect(
+      migrated.url,
+      'https://aokorin.xyz/api/comics/repository/index.json',
+    );
+    expect(migrated.name, '我的漫画库');
+    expect(migrated.enabled, isFalse);
+    expect(
+      ComicSourceLibraryManager.provenanceFor('migration-fixture')!.originId,
+      builtin.id,
+    );
+    expect(ComicSourceLibraryManager.all().length, countBeforeMigration);
+    expect(
+      ComicSourceLibraryManager.all().first.url,
+      'https://custom.example/index.json',
+    );
+    ComicSourceLibraryManager.migrateIfNeeded();
+    expect(ComicSourceLibraryManager.all().length, countBeforeMigration);
+    ComicSourceLibraryManager.edit(
+      builtin.id,
+      url: 'https://custom.example/my-library.json',
+    );
+    ComicSourceLibraryManager.migrateIfNeeded();
+    expect(
+      ComicSourceLibraryManager.find(builtin.id)!.url,
+      'https://custom.example/my-library.json',
+    );
     ComicSourceLibraryManager.remove(builtin.id);
     ComicSourceLibraryManager.migrateIfNeeded();
     expect(ComicSourceLibraryManager.find(builtin.id), isNull);
+    App.data.settings['comicSourceLibraries'] = [];
+    App.data.settings['comicSourceListUrl'] =
+        'https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json';
+    App.data.settings['xghubBuiltinComicLibraryV1'] = false;
+    ComicSourceLibraryManager.migrateIfNeeded();
+    expect(ComicSourceLibraryManager.all().length, 1);
+    expect(
+      ComicSourceLibraryManager.all().single.url,
+      'https://aokorin.xyz/api/comics/repository/index.json',
+    );
+    expect(
+      ComicSourceLibraryManager.all().single.id,
+      stableLibraryId(
+        'https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json',
+      ),
+    );
     await App.data.saveData(false);
     var script = await File(
       'test/support/xghub_comic_source.js',
