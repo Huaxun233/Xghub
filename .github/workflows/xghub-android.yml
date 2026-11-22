@@ -5,7 +5,7 @@ permissions:
   contents: read
 env:
   PACKAGE_NAME: xyz.aokorin.xghub
-  BUNDLED_MODULES: bundled-modules/hongguo,bundled-modules/aigo
+  BUNDLED_MODULES: bundled-modules/hongguo
   PYTHONUTF8: '1'
 jobs:
   android:
@@ -17,10 +17,6 @@ jobs:
         with:
           repository: guoapp-modules/hongguo
           path: bundled-modules/hongguo
-      - uses: actions/checkout@v4
-        with:
-          repository: Huaxun233/aigo-module
-          path: bundled-modules/aigo
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
