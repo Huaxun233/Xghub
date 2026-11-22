@@ -98,6 +98,7 @@ type nativeInput struct {
 	File            string                  `json:"file"`
 	URL             string                  `json:"url"`
 	Token           string                  `json:"token"`
+	Keys            []string                `json:"keys"`
 }
 
 type nativeCatalogResult struct {
@@ -392,6 +393,10 @@ func nativeDispatch(input nativeInput) (any, error) {
 		return engine.installModule(input.Token)
 	case "uninstallModule":
 		return engine.uninstallModule(input.Source)
+	case "cmsProbe":
+		return engine.cmsProbe(ctx, input.URL)
+	case "cmsInstall":
+		return engine.cmsInstall(ctx, input.URL, input.Keys)
 	case "sourceDevices":
 		return engine.sourceDevices(ctx, nativeActionSource(input), input.Command == "register")
 	case "soraniAccount", "sourceAccount":

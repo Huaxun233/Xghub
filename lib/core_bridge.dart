@@ -132,6 +132,10 @@ abstract class AppRepository {
       throw AppFailure('当前环境不支持安装模块');
   Future<void> uninstallModule(String id) async =>
       throw AppFailure('当前环境不支持卸载模块');
+  Future<List<CmsSiteProbe>> cmsProbe(String url) async =>
+      throw AppFailure('当前环境不支持站源导入');
+  Future<CmsInstallResult> cmsInstall(String url, List<String> keys) async =>
+      throw AppFailure('当前环境不支持站源导入');
   Map<String, int> missingSourceDownloads() => const {};
   Future<List<String>> suggestions(String source, String query) async =>
       const [];
@@ -855,6 +859,37 @@ class NativeRepository extends AppRepository {
     _adminPermission();
     final result = await _call({'action': 'uninstallModule', 'source': id});
     _installSources(result['sources']);
+  }
+
+  @override
+  Future<List<CmsSiteProbe>> cmsProbe(String url) async {
+    _adminPermission();
+    final result = await _call({'action': 'cmsProbe', 'url': url});
+    return [
+      for (final row in result['items'] as List? ?? const [])
+        CmsSiteProbe.fromJson(Map<String, dynamic>.from(row as Map)),
+    ];
+  }
+
+  @override
+  Future<CmsInstallResult> cmsInstall(String url, List<String> keys) async {
+    _adminPermission();
+    final result = await _call({
+      'action': 'cmsInstall',
+      'url': url,
+      'keys': keys,
+    });
+    _installSources(result['sources']);
+    return CmsInstallResult(
+      installed: [
+        for (final row in result['installed'] as List? ?? const [])
+          CmsSiteInstall.fromJson(Map<String, dynamic>.from(row as Map)),
+      ],
+      failed: [
+        for (final row in result['failed'] as List? ?? const [])
+          CmsSiteInstall.fromJson(Map<String, dynamic>.from(row as Map)),
+      ],
+    );
   }
 
   @override

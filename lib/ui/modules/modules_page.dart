@@ -58,7 +58,13 @@ List<SourceModule> _arranged(List<SourceModule> modules, List<String> order) {
   return [for (final id in order) ?byId.remove(id), ...byId.values];
 }
 
-const _tabLabels = ['已安装', '在线仓库', '内置', '手动'];
+const _tabLabels = ['已安装', '在线仓库', '内置', '站源导入', '手动'];
+
+const _cmsPresetUrls = [
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/9918.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/0826.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/jsm.json',
+];
 
 class _ModulesPageState extends State<ModulesPage>
     with SingleTickerProviderStateMixin {
@@ -70,6 +76,10 @@ class _ModulesPageState extends State<ModulesPage>
   ModuleStore? _index;
   String? _indexError;
   bool _busy = false;
+  List<CmsSiteProbe>? _cmsSites;
+  String? _cmsError;
+  final Set<String> _cmsChecked = {};
+  final _cmsUrl = TextEditingController();
   final _groupsScope = FocusScopeNode(
     debugLabel: 'modules-groups',
     traversalEdgeBehavior: TraversalEdgeBehavior.parentScope,
@@ -99,6 +109,7 @@ class _ModulesPageState extends State<ModulesPage>
   @override
   void dispose() {
     _tabs.dispose();
+    _cmsUrl.dispose();
     _groupsScope.dispose();
     _detailScope.dispose();
     for (final node in _groupFocus) {
@@ -470,6 +481,181 @@ class _ModulesPageState extends State<ModulesPage>
     ]);
   }
 
+  Future<void> _cmsLoad() async {
+    final url = _cmsUrl.text.trim();
+    if (url.isEmpty) return;
+    setState(() {
+      _cmsSites = null;
+      _cmsError = null;
+      _cmsChecked.clear();
+    });
+    try {
+      final sites = await _repository.cmsProbe(url);
+      if (mounted) setState(() => _cmsSites = sites);
+    } catch (failure) {
+      if (mounted) setState(() => _cmsError = '$failure');
+    }
+  }
+
+  Future<void> _cmsImport({bool all = false}) async {
+    final sites = _cmsSites;
+    if (sites == null) return;
+    final keys = [
+      for (final site in sites)
+        if (site.compatible && (all || _cmsChecked.contains(site.key)))
+          site.key,
+    ];
+    if (keys.isEmpty) {
+      _show('先选择要导入的站源');
+      return;
+    }
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('导入 ${keys.length} 个站源？'),
+        content: const Text('兼容的 CMS 站点会生成模块并安装，安装后可以在「已安装」里管理。'),
+        actions: [
+          FocusRing(
+            radius: 20,
+            child: TextButton(
+              autofocus: true,
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消'),
+            ),
+          ),
+          FocusRing(
+            radius: 20,
+            child: FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('导入'),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true) return;
+    await _run(() async {
+      final result = await _repository.cmsInstall(_cmsUrl.text.trim(), keys);
+      final ok = result.installed.length;
+      final bad = result.failed.length;
+      _show('$ok 个站源导入成功${bad == 0 ? '' : '，$bad 个失败'}');
+    });
+  }
+
+  Widget _cmsTab() {
+    final enabled = _canInstall;
+    final sites = _cmsSites;
+    final compatible = [
+      for (final site in sites ?? const <CmsSiteProbe>[])
+        if (site.compatible) site,
+    ];
+    final checked = compatible.where((site) => _cmsChecked.contains(site.key)).length;
+    return _list([
+      GroupCard(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
+            child: FormTextField(
+              controller: _cmsUrl,
+              url: true,
+              enabled: enabled,
+              decoration: const InputDecoration(
+                labelText: '站源配置地址',
+                hintText: 'https://…/config.json',
+              ),
+              onSubmitted: (_) => enabled ? _cmsLoad() : null,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final preset in _cmsPresetUrls)
+                  ActionChip(
+                    label: Text(Uri.parse(preset).pathSegments.last),
+                    onPressed: enabled
+                        ? () {
+                            _cmsUrl.text = preset;
+                            _cmsLoad();
+                          }
+                        : null,
+                  ),
+                FilledButton.tonalIcon(
+                  onPressed: enabled ? _cmsLoad : null,
+                  icon: const Icon(Icons.search_rounded),
+                  label: const Text('解析站源'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      if (_cmsError ?? _error case final error?)
+        _Note(error)
+      else if (sites == null)
+        const _Note('输入或选择一个 TVBox 风格的站源配置地址，解析后勾选要导入的站点。')
+      else if (compatible.isEmpty)
+        const _Note('这个配置里没有兼容的 CMS 站点。')
+      else ...[
+        GroupCard(
+          children: [
+            SettingsTile(
+              icon: Icons.select_all_rounded,
+              title: checked == compatible.length ? '取消全选' : '全选',
+              subtitle: '兼容站点 ${compatible.length} 个，已选 $checked 个',
+              enabled: enabled,
+              onTap: enabled
+                  ? () => setState(() {
+                      _cmsChecked
+                        ..clear()
+                        ..addAll(
+                          checked == compatible.length
+                              ? const <String>[]
+                              : [for (final site in compatible) site.key],
+                        );
+                    })
+                  : null,
+            ),
+            SettingsTile(
+              icon: Icons.download_rounded,
+              title: '导入所选站源',
+              subtitle: '生成模块并安装',
+              enabled: enabled && checked > 0,
+              onTap: enabled && checked > 0 ? () => _cmsImport() : null,
+            ),
+            SettingsTile(
+              icon: Icons.download_for_offline_outlined,
+              title: '导入全部兼容站点',
+              enabled: enabled,
+              onTap: enabled ? () => _cmsImport(all: true) : null,
+            ),
+          ],
+        ),
+        for (final site in compatible)
+          GroupCard(
+            children: [
+              CheckboxListTile(
+                value: _cmsChecked.contains(site.key),
+                onChanged: enabled
+                    ? (value) => setState(() {
+                        if (value ?? false) {
+                          _cmsChecked.add(site.key);
+                        } else {
+                          _cmsChecked.remove(site.key);
+                        }
+                      })
+                    : null,
+                title: Text(site.name),
+                subtitle: Text(site.installed ? '已安装 · ${site.id}' : site.api),
+              ),
+            ],
+          ),
+      ],
+    ]);
+  }
+
   Widget _manualTab() {
     final enabled = _canInstall;
     return _list([
@@ -494,13 +680,19 @@ class _ModulesPageState extends State<ModulesPage>
     ]);
   }
 
-  Widget? _refreshButton() => _tabs.index == 1
-      ? BarButton(
-          icon: Icons.refresh_rounded,
-          tooltip: '刷新',
-          onPressed: _index == null && _indexError == null ? null : _loadIndex,
-        )
-      : null;
+  Widget? _refreshButton() => switch (_tabs.index) {
+    1 => BarButton(
+        icon: Icons.refresh_rounded,
+        tooltip: '刷新',
+        onPressed: _index == null && _indexError == null ? null : _loadIndex,
+      ),
+    3 => BarButton(
+        icon: Icons.refresh_rounded,
+        tooltip: '重新解析',
+        onPressed: _cmsUrl.text.trim().isEmpty ? null : _cmsLoad,
+      ),
+    _ => null,
+  };
 
   Widget _tabBar() => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -527,6 +719,7 @@ class _ModulesPageState extends State<ModulesPage>
             _installedTab(),
             _catalogTab(bundled: false),
             _catalogTab(bundled: true),
+            _cmsTab(),
             _manualTab(),
           ],
         ),
@@ -538,6 +731,7 @@ class _ModulesPageState extends State<ModulesPage>
     0 => _installedTab(),
     1 => _catalogTab(bundled: false),
     2 => _catalogTab(bundled: true),
+    3 => _cmsTab(),
     _ => _manualTab(),
   };
 

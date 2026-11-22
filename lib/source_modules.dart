@@ -75,6 +75,61 @@ class ModuleStore {
   final String warning;
 }
 
+class CmsSiteProbe {
+  const CmsSiteProbe({
+    required this.key,
+    required this.name,
+    required this.api,
+    this.format = '',
+    this.reason = '',
+    this.id = '',
+    this.installed = false,
+  });
+  factory CmsSiteProbe.fromJson(Map<String, dynamic> json) => CmsSiteProbe(
+    key: json['key'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+    api: json['api'] as String? ?? '',
+    format: json['format'] as String? ?? '',
+    reason: json['reason'] as String? ?? '',
+    id: json['id'] as String? ?? '',
+    installed: json['installed'] == true,
+  );
+  final String key;
+  final String name;
+  final String api;
+  final String format;
+  final String reason;
+  final String id;
+  final bool installed;
+  bool get compatible => id.isNotEmpty;
+}
+
+class CmsSiteInstall {
+  const CmsSiteInstall({
+    required this.key,
+    required this.name,
+    this.id = '',
+    this.error = '',
+  });
+  factory CmsSiteInstall.fromJson(Map<String, dynamic> json) =>
+      CmsSiteInstall(
+        key: json['key'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        id: json['id'] as String? ?? '',
+        error: json['error'] as String? ?? '',
+      );
+  final String key;
+  final String name;
+  final String id;
+  final String error;
+}
+
+class CmsInstallResult {
+  const CmsInstallResult({this.installed = const [], this.failed = const []});
+  final List<CmsSiteInstall> installed;
+  final List<CmsSiteInstall> failed;
+}
+
 bool isNewerModuleVersion(String latest, String installed) {
   List<int>? parse(String version) {
     final parts = version.split('.').map(int.tryParse).toList();
