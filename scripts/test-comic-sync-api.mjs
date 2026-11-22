@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+const base='http://127.0.0.1:8793/api/comics/state';
+const headers=token=>({'Cookie':'__Host-hghub='+token.repeat(64),'Content-Type':'application/json','Origin':'http://127.0.0.1:8793'});
+assert.equal((await fetch(base)).status,401);
+const current=await (await fetch(base,{headers:headers('a')})).json();
+const body={revision:current.revision,catalogs:[],shelf:['source:one'],progress:{'source:one':1}};
+const first=await fetch(base,{method:'PUT',headers:headers('a'),body:JSON.stringify(body)});assert.equal(first.status,200);const result=await first.json();assert.equal(result.revision,current.revision+1);
+const stale=await fetch(base,{method:'PUT',headers:headers('a'),body:JSON.stringify(body)});assert.equal(stale.status,409);
+const own=await (await fetch(base,{headers:headers('a')})).json();assert.deepEqual(own.state.shelf,['source:one']);assert.equal(own.state.progress['source:one'],1);
+const other=await (await fetch(base,{headers:headers('b')})).json();assert.equal(other.state,null);
+const cross=await fetch(base,{method:'PUT',headers:{...headers('a'),Origin:'https://other.example'},body:JSON.stringify({...body,revision:result.revision})});assert.equal(cross.status,403);
+console.log('PASS: real local D1, session authentication, account isolation, stale revision conflict and cross-origin rejection');

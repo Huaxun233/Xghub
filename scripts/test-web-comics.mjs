@@ -1,0 +1,30 @@
+import { chromium } from 'playwright-core';
+import assert from 'node:assert/strict';
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+try {
+ const page = await browser.newPage();
+ const errors = []; page.on('pageerror', e => errors.push(e.message));
+ await page.route('**/api/catalog', r => r.fulfill({json: []}));
+ await page.route('**/api/account/me', r => r.fulfill({json: {user:null}}));
+ await page.route('https://comic-test.example/**', r => r.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWQkAAAAASUVORK5CYII=','base64')}));
+ await page.goto((process.env.XGHUB_TEST_ORIGIN || 'http://127.0.0.1:1422') + '/#comics', {waitUntil:'domcontentloaded',timeout:90000});
+ await page.getByRole('heading',{name:'漫画',exact:true}).waitFor();
+ const fixture = {version:1,id:'test',name:'Test',comics:[{id:'one',title:'阅读验证',category:'测试',cover:'https://comic-test.example/cover.png',chapters:[{id:'c1',title:'第一章',pages:['https://comic-test.example/1.png']},{id:'c2',title:'第二章',pages:['https://comic-test.example/2.png']}]}]};
+ await page.getByLabel('导入漫画目录').setInputFiles({name:'catalog.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});
+ await page.getByRole('heading',{name:'阅读验证'}).click();
+ await page.getByRole('button',{name:'加入书架',exact:true}).click();
+ await page.getByLabel('选择章节').selectOption('1');
+ await page.waitForFunction(()=>{const i=document.querySelector('img[alt="第 1 页"]');return i?.complete && i.naturalWidth===1});
+ await page.getByRole('button',{name:'返回漫画'}).click();
+ await page.reload();
+ await page.getByRole('button',{name:'我的书架',exact:true}).click();
+ await page.getByRole('heading',{name:'阅读验证'}).click();
+ assert.equal(await page.getByLabel('选择章节').inputValue(),'1');
+ await page.getByRole('button',{name:'返回漫画'}).click();
+ await page.getByLabel('搜索漫画').fill('不存在');
+ await page.getByText('没有匹配的漫画。',{exact:true}).waitFor();
+ await page.setViewportSize({width:390,height:844});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),true);
+ assert.deepEqual(errors,[]);
+ console.log('PASS: import, image decode, chapter progress, persisted bookshelf, search and mobile width');
+} finally { await browser.close(); }

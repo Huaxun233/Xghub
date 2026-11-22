@@ -1,0 +1,23 @@
+import {chromium} from 'playwright-core';
+import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'msedge',headless:true});
+try {
+ const page=await browser.newPage(); const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/api/catalog',r=>r.fulfill({json:[]}));await page.route('**/api/account/me',r=>r.fulfill({json:{user:null}}));
+ await page.route('https://comic-test.example/**',r=>r.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWQkAAAAASUVORK5CYII=','base64')}));
+ await page.goto((process.env.XGHUB_TEST_ORIGIN || 'http://127.0.0.1:1422') + '/#comics',{waitUntil:'domcontentloaded'});
+ await page.getByText('JavaScript 漫画插件',{exact:true}).click();
+ let script=await fs.readFile('../guoapp-client/test/support/xghub_comic_source.js','utf8');script=script.replaceAll('http://127.0.0.1:8319','https://comic-test.example');
+ await page.context().route('https://network-test.example/**',r=>r.fulfill({headers:{'Access-Control-Allow-Origin':'*'},contentType:'text/plain',body:'network-ok'}));
+ script=script.replace(/load:\s*\(keyword\)\s*=>\s*\(\{/, 'load: async (keyword) => { const encoded=Convert.encodeUtf8("玄果");if(Convert.decodeUtf8(Convert.decodeBase64(Convert.encodeBase64(encoded)))!=="玄果")throw Error("Encoding failed");if(Convert.hexEncode(Convert.hexDecode("00ff"))!=="00ff")throw Error("Hex failed");const response=await Network.sendRequest("GET","https://network-test.example/text"); if(response.body!=="network-ok")throw Error("Text response failed");const bytes=await Network.fetchBytes("GET","https://network-test.example/bytes");if(!(bytes.body instanceof ArrayBuffer)||bytes.body.byteLength!==10)throw Error("Bytes response failed"); return ({').replace(/maxPage:\s*1,\s*\}\),/, 'maxPage: 1, }); },');
+ assert(script.includes('load: async'), 'Network probe must be injected');
+ let networkRequests=0;page.context().on('request',request=>{if(request.url().startsWith('https://network-test.example/'))networkRequests++});
+ await page.getByLabel('导入 JS 漫画插件').setInputFiles({name:'source.js',mimeType:'text/javascript',buffer:Buffer.from(script)});
+ await page.getByLabel('搜索插件漫画').fill('hello');await page.getByRole('button',{name:'搜索插件',exact:true}).click();
+ await page.getByRole('button',{name:'Hello Comics',exact:true}).click();await page.getByRole('button',{name:'Chapter 1',exact:true}).click();
+ await page.waitForFunction(()=>{const i=document.querySelector('img[alt="第 1 页"]');return i?.complete&&i.naturalWidth===1});
+ await page.getByRole('button',{name:'加入书架',exact:true}).click();await page.getByRole('button',{name:'返回漫画'}).click();await page.reload();
+ await page.getByRole('button',{name:'我的书架',exact:true}).click();await page.getByRole('heading',{name:'Hello Comics'}).click();await page.getByLabel('选择章节').waitFor();
+ await page.getByRole('button',{name:'返回漫画'}).click();await page.getByText('JavaScript 漫画插件 · Xghub Integration Demo',{exact:true}).click();await page.getByLabel('搜索插件漫画').waitFor();await page.getByRole('button',{name:'移除当前插件',exact:true}).click();assert.equal(await page.evaluate(()=>localStorage.getItem('xghub.web.comic-plugin.v1')),null);assert(networkRequests>=2,'Plugin must issue text and byte HTTP requests');assert.deepEqual(errors,[]);console.log('PASS: JS plugin import, search, details, chapter image decode, persisted bookshelf reopening');
+}finally{await browser.close()}

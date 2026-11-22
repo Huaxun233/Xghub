@@ -1,3 +1,5 @@
+import { comicState } from './comicState';
+import { refreshIkanbot } from './videoResolver';
 import { MAX_SOURCE_BYTES, parseSource } from "../src/videoCatalog";
 import { account, requireAdmin } from "./accounts";
 import { invites } from "./invites";
@@ -23,6 +25,16 @@ async function api(request: Request, env: Env, url: URL) {
     ).all<{ document: string }>();
     return new Response("[" + results.map(row => row.document).join(",") + "]", { headers: jsonHeaders });
   }
+
+  const refreshRoute = /^\/api\/video\/ikanbot\/(\d{1,12})$/.exec(pathname);
+  if (method === 'GET' && refreshRoute) {
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (!(await env.AUTH_LIMIT.limit({key:'video-refresh:'+ip})).success) throw new HttpError(429, '刷新过于频繁，请稍后重试');
+    const row = await env.DB.prepare('SELECT document FROM catalog_sources WHERE id = ?').bind('ikanbot').first<{document:string}>();
+    if (!row || !parseSource(JSON.parse(row.document)).series.some(item => item.id === refreshRoute[1])) throw new HttpError(404, '影片不在共享片库');
+    return json(await refreshIkanbot(refreshRoute[1]));
+  }
+  if (pathname === '/api/comics/state') return comicState(request, env);
 
   const action = /^\/api\/account\/(me|register|login|logout)$/.exec(pathname);
   if (action) return account(request, env, action[1]);

@@ -1,3 +1,4 @@
+import GuoModules from "../components/GuoModules";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import SourceUrlInput from "../components/SourceUrlInput";
 import RepositorySources from "../components/RepositorySources";
@@ -122,12 +123,15 @@ export default function Videos({ active, bottomInset = 0, platform }: {
       setError("设备存储空间不足或不可用，本次更改只在当前会话保留。");
     }
   };
-  const sources = platform?.sources ?? library.sources;
+  const [refreshed, setRefreshed] = useState<Record<string, Series>>({});
+  const [refreshing, setRefreshing] = useState(false);
+  const sources = platform ? [...platform.sources, ...library.sources.filter(local => !platform.sources.some(shared => shared.id === local.id))] : library.sources;
   const entries = sources.flatMap(source => source.series.map(series => ({
-    key: (platform ? "shared:" : "") + source.id + "/" + series.id, source, series,
+    key: (platform?.sources.includes(source) ? "shared:" : "") + source.id + "/" + series.id, source, series,
   })));
   const categories = platform ? [...new Set(entries.map(entry => entry.series.category))].sort() : [];
-  const selected = entries.find(entry => entry.key === selection?.key);
+  const baseSelected = entries.find(entry => entry.key === selection?.key);
+  const selected = baseSelected ? {...baseSelected, series: refreshed[baseSelected.key] ?? baseSelected.series} : undefined;
   const current = selected?.series.episodes.find(episode => episode.id === selection?.episode);
   const visible = entries.filter(({ key, series, source }) => {
     if (sourceId && sourceId !== source.id) return false;
@@ -251,7 +255,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-bold tracking-tight">{platform?.section === "home" ? "首页" : platform?.section === "library" ? "分类" : platform?.section === "search" ? "搜索" : platform?.section === "personal" ? "我的片单" : "视频库"}</h1>
           {platform?.section === "library" && categories.length > 0 && <span className="text-sm text-mut">{categories.length} 个分类</span>}
-          {!platform && <label className={button + " relative cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
+          {(!platform || platform.section === "personal") && <label className={button + " relative cursor-pointer focus-within:ring-2 focus-within:ring-primary"}>
             导入站源
             <input className="sr-only" aria-label="导入站源" type="file" accept=".json,application/json"
               onChange={event => {
@@ -261,9 +265,10 @@ export default function Videos({ active, bottomInset = 0, platform }: {
               }} />
           </label>}
         </div>
-        {!platform && <SourceUrlInput onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
+        {(!platform || platform.section === "personal") && <SourceUrlInput onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
+        {!platform && <GuoModules />}
         {!platform && <RepositorySources onLoad={source => { setError(""); setMessage(""); applyImportedSource(source); }} />}
-        {!platform && <form onSubmit={addLink} className="grid gap-2 rounded-(--r-md) bg-s1 p-3 sm:grid-cols-[1fr_2fr_auto]">
+        {(!platform || platform.section === "personal") && <form onSubmit={addLink} className="grid gap-2 rounded-(--r-md) bg-s1 p-3 sm:grid-cols-[1fr_2fr_auto]">
           <input className={field} aria-label="视频名称" placeholder="视频名称（选填）" value={title}
             onChange={event => setTitle(event.target.value)} maxLength={120} />
           <input className={field} aria-label="HTTPS 播放地址" placeholder="HTTPS 视频直链（MP4 或 M3U8）"
@@ -287,7 +292,13 @@ export default function Videos({ active, bottomInset = 0, platform }: {
                 <button className={button} onClick={() => toggleFollow(selected.key)}>
                   {library.followed.includes(selected.key) ? "取消追剧" : "追剧"}
                 </button>
-                <button className={button} onClick={() => setSelection(undefined)}>关闭播放器</button>
+                {platform && selected.source.id === 'ikanbot' && <button className={button} disabled={refreshing} onClick={() => {
+                  setRefreshing(true); setError('');
+                  void fetch('/api/video/ikanbot/' + encodeURIComponent(selected.series.id), {credentials:'same-origin',cache:'no-store'})
+                    .then(async response => {const body = await response.json(); if(!response.ok) throw new Error(body.error || '线路刷新失败'); return body;})
+                    .then(body => {const series = {...selected.series, poster:body.poster || selected.series.poster, episodes:body.lines[0].episodes.map(parseEpisode)}; setRefreshed(previous => ({...previous,[selected.key]:series})); setSelection({key:selected.key,episode:series.episodes[0].id}); setMessage('已刷新播放线路');})
+                    .catch(reason => setError((reason as Error).message)).finally(() => setRefreshing(false));
+                }}>{refreshing ? '正在刷新线路…' : '刷新播放线路'}</button>}                <button className={button} onClick={() => setSelection(undefined)}>关闭播放器</button>
               </div>
             </div>
             {active && <Playback key={selected.key + "/" + current.id + "/" + current.url} episode={current}
@@ -329,7 +340,7 @@ export default function Videos({ active, bottomInset = 0, platform }: {
                 {categories.map(item => <option key={item} value={item}>{item}</option>)}
               </select>
             )}
-            {!platform && sourceId && <button onClick={removeSource} className={button}>移除所选站源</button>}
+            {library.sources.some(source => source.id === sourceId) && <button onClick={removeSource} className={button}>移除所选站源</button>}
           </div>
           <input className={field} type="search" aria-label="搜索视频库" placeholder="按名称或分类搜索" value={query}
             onChange={event => setQuery(event.target.value)} />

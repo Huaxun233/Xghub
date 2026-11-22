@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS comic_state (
+ account_id INTEGER PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+ document TEXT NOT NULL CHECK(length(CAST(document AS BLOB)) <= 524288),
+ revision INTEGER NOT NULL DEFAULT 1,
+ updated_at INTEGER NOT NULL
+);

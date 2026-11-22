@@ -1,3 +1,5 @@
+import Comics from './Comics';
+import GuoModules from "../components/GuoModules";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Logo } from "../icons";
 import { MAX_SOURCE_BYTES, parseSource, type Source } from "../videoCatalog";
@@ -14,7 +16,7 @@ const panel = "space-y-3 rounded-(--r-md) border border-s3 bg-s1 p-4";
 type User = { username: string };
 type AccountPage = { accounts: (User & { id: number; created_at: number; invite_code: string | null })[]; next: number | null };
 type Invite = { code: string; max_uses: number; used: number; active: number };
-type Section = "home" | "library" | "search" | "account" | "admin";
+type Section = "comics" | "home" | "library" | "search" | "account" | "admin";
 
 async function api<T>(path: string, options?: { method?: string; body?: unknown; token?: string; signal?: AbortSignal }): Promise<T> {
   const headers = new Headers({ Accept: "application/json" });
@@ -205,6 +207,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
             <form onSubmit={save} className="space-y-3">
               <SourceUrlInput disabled={busy} successHint="内容已填入下方编辑框，点「保存并发布」后才会出现在片库。"
                 onLoad={source => setInput(JSON.stringify(source, null, 2))} />
+              <GuoModules />
               <RepositorySources disabled={busy} onLoad={source => {
                 setInput(JSON.stringify(source, null, 2));
                 setStatus("仓库站源已载入编辑框。确认内容后可保存并发布。");
@@ -302,7 +305,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
 function currentSection(): Section {
   if (window.location.pathname === "/admin" || window.location.pathname === "/admin/") return "admin";
   const selection = window.location.hash.slice(1);
-  return selection === "library" || selection === "search" || selection === "account" ? selection : "home";
+  return selection === "comics" || selection === "library" || selection === "search" || selection === "account" ? selection : "home";
 }
 
 export default function Platform() {
@@ -342,7 +345,7 @@ export default function Platform() {
           <a href="/" aria-label="玄果首页" className="flex items-center justify-center gap-2 font-bold sm:justify-start"><Logo size={26} /><span className="hidden sm:inline">Xghub</span></a>
           {section === "admin" ? <a href="/" className="text-sm text-mut hover:text-on">返回网站</a> : (
           <nav aria-label="主导航" className="grid gap-1">
-            {([{ id: "home", label: "首页" }, { id: "library", label: "分类" },
+            {([{ id: "home", label: "影视" }, { id: "comics", label: "漫画" }, { id: "library", label: "分类" },
               { id: "search", label: "搜索" }, { id: "account", label: "我的" }] as const)
               .map(item => <a key={item.id} href={"#" + item.id} aria-current={section === item.id ? "page" : undefined}
                 className={"rounded-lg px-2 py-3 text-center text-sm sm:text-left " + (section === item.id ? "bg-pc text-on-pc font-semibold" : "text-mut hover:bg-s3")}>{item.label}</a>)}
@@ -351,7 +354,7 @@ export default function Platform() {
           <div className="mt-auto"><WebTheme /></div>
       </aside>
       <main className="relative min-w-0 flex-1">
-        {section === "home" || section === "library" || section === "search" ? (
+        {section === "comics" ? <Comics /> : section === "home" || section === "library" || section === "search" ? (
           <Videos active platform={{ section, sources, loading, error, reload: () => void load() }} />
         ) : (
           <div className="absolute inset-0 scroll-y">

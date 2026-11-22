@@ -100,3 +100,12 @@ export async function account(request: Request, env: Env, action: string) {
   await env.DB.batch(statements);
   return json({ user: { username: user.username } }, 200, { "Set-Cookie": cookie(token, SESSION_SECONDS) });
 }
+
+export async function requireAccount(request: Request, env: Env): Promise<number> {
+  const token = sessionToken(request);
+  const user = token ? await env.DB.prepare(
+    'SELECT accounts.id FROM sessions JOIN accounts ON accounts.id = sessions.account_id WHERE token_hash = ? AND expires_at > ?',
+  ).bind(hex(await digest(token)), Date.now()).first<{id:number}>() : null;
+  if (!user) throw new HttpError(401, '请先登录账号');
+  return user.id;
+}
