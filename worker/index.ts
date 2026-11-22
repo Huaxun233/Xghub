@@ -1,5 +1,6 @@
 import { videoRepositoryPages, readUpstream } from "./videoRepository";
 import { GUO_MODULE_INDEX, parseGuoModules } from "../src/guoModuleIndex";
+import { guoModuleFile } from "./guoModule";
 import { project } from './project';
 import { comicRepository } from './comicRepository';
 import { comicState } from './comicState';
@@ -36,6 +37,12 @@ async function api(request: Request, env: Env, url: URL) {
     } catch {
       throw new HttpError(502, "小果模块仓库暂时无法读取");
     }
+  }
+
+  const guoModuleRoute = /^\/api\/guo-module\/([a-z0-9][a-z0-9_-]{0,31})$/.exec(pathname);
+  if (method === "GET" && guoModuleRoute) {
+    await limit(env, "guo-module-file:" + clientAddress(request));
+    return guoModuleFile(guoModuleRoute[1], url);
   }
 
   const projectResponse = await project(request, env, url);
