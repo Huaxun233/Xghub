@@ -1,3 +1,4 @@
+import { project } from './project';
 import { comicRepository } from './comicRepository';
 import { comicState } from './comicState';
 import { refreshIkanbot } from './videoResolver';
@@ -16,6 +17,8 @@ async function api(request: Request, env: Env, url: URL) {
   const origin = request.headers.get("Origin");
   if (method !== "GET" && origin && origin !== url.origin) throw new HttpError(403, "请求来源不匹配");
 
+  const projectResponse = await project(request, env, url);
+  if (projectResponse) return projectResponse;
   const comicFile = /^\/api\/comics\/repository\/([^/]+)$/.exec(pathname);
   if(comicFile) return comicRepository(request, comicFile[1], {cache:caches.default});
   if (method === "GET" && pathname === "/api/health") {
@@ -86,7 +89,7 @@ async function api(request: Request, env: Env, url: URL) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/admin" || url.pathname === "/admin/") {
+    if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname === "/app" || url.pathname === "/app/") {
       return env.ASSETS.fetch(new Request(new URL("/", url), request));
     }
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);

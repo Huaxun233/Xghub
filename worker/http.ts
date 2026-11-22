@@ -2,6 +2,7 @@ import type { PasswordHasher } from "./passwordHasher";
 
 export interface Env {
   DB: D1Database;
+  PROJECT_MEDIA?: R2Bucket;
   ASSETS: Fetcher;
   AUTH_LIMIT: RateLimit;
   PASSWORD_HASHER: DurableObjectNamespace<PasswordHasher>;

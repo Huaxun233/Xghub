@@ -1,0 +1,12 @@
+import type {Env} from './http';
+const CHUNK=512*1024;
+type Meta={id:string;size:number;type:string;uploaded:number};
+function info(row:Meta){return{key:row.id,size:row.size,httpMetadata:{contentType:row.type},httpEtag:'"'+row.id+'"',uploaded:new Date(row.uploaded)};}
+/** Small owner-managed media library on the existing D1 free allocation; no R2 activation required. */
+export function databaseMedia(db:Env['DB']){return{
+ async head(key:string){const row=await db.prepare('SELECT id,size,type,uploaded FROM project_media WHERE id=? AND ready=1').bind(key).first<Meta>();return row?info(row):null;},
+ async list(options:{prefix:string;limit:number;include?:string[]}){const {results}=await db.prepare('SELECT id,size,type,uploaded FROM project_media WHERE ready=1 AND id LIKE ? ORDER BY uploaded DESC LIMIT ?').bind(options.prefix+'%',options.limit+1).all<Meta>();return{objects:results.slice(0,options.limit).map(info),truncated:results.length>options.limit};},
+ async put(key:string,body:Uint8Array,options:{httpMetadata:{contentType:string}}){await db.prepare('INSERT INTO project_media(id,size,type,uploaded,ready) VALUES(?,?,?,?,0)').bind(key,body.length,options.httpMetadata.contentType,Date.now()).run();try{for(let start=0;start<body.length;start+=CHUNK){await db.prepare('INSERT INTO project_media_chunks(media_id,part,data) VALUES(?,?,?)').bind(key,start/CHUNK,body.slice(start,start+CHUNK).buffer).run();}await db.prepare('UPDATE project_media SET ready=1 WHERE id=?').bind(key).run();}catch(e){await db.prepare('DELETE FROM project_media WHERE id=?').bind(key).run();throw e;}},
+ async get(key:string,options?:{range:{offset:number;length:number}}){const row=await db.prepare('SELECT id,size,type,uploaded FROM project_media WHERE id=? AND ready=1').bind(key).first<Meta>();if(!row)return null;const start=options?.range.offset??0,end=start+(options?.range.length??row.size);let part=Math.floor(start/CHUNK);const last=Math.ceil(end/CHUNK);return{body:new ReadableStream<Uint8Array>({async pull(controller){if(part>=last){controller.close();return;}const current=part++;const data=await db.prepare('SELECT data FROM project_media_chunks WHERE media_id=? AND part=?').bind(key,current).first<{data:number[]}>();if(!data){controller.error(new Error('媒体文件不完整'));return;}const bytes=new Uint8Array(data.data);controller.enqueue(bytes.slice(Math.max(0,start-current*CHUNK),Math.min(bytes.length,end-current*CHUNK)));}})};},
+ async delete(key:string){await db.prepare('DELETE FROM project_media WHERE id=?').bind(key).run();}
+};}

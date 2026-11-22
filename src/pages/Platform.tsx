@@ -1,3 +1,4 @@
+import ProjectSettings from '../components/ProjectSettings';
 import { lazy, Suspense } from 'react';
 const Comics = lazy(() => import('./Comics'));
 import GuoModules from "../components/GuoModules";
@@ -194,6 +195,7 @@ function Admin({ sources, reload }: { sources: Source[]; reload: () => Promise<v
         </form>
       ) : (
         <div className="grid items-start gap-4 lg:grid-cols-[3fr_2fr]">
+          <ProjectSettings token={token} />
           <div className={panel + " lg:row-span-2"}>
             <h2 className="text-lg font-semibold">站源与剧集</h2>
             {sources.length ? <ul className="divide-y divide-s3">
