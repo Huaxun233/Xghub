@@ -62,6 +62,7 @@ const _androidDecoders = {
   TelevisionDecoder.hardwareSwapUv: '硬解（修正偏蓝）',
 };
 const _links = [
+  [('作者主页', 'https://github.com/Huaxun233')],
   [
     ('GitHub · 重建版', String.fromEnvironment('PROJECT_URL')),
     ('GitHub · 原作者', 'https://github.com/fish2018'),
