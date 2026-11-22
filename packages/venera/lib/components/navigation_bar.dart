@@ -200,7 +200,9 @@ class NaviPaneState extends State<NaviPane>
         : EdgeInsets.zero;
     return _NaviPopScope(
       action: () async {
-        if (!await Navigator.of(context).maybePop() && mounted && !App.isEmbedded) {
+        if (!await Navigator.of(context).maybePop() &&
+            mounted &&
+            !App.isEmbedded) {
           await SystemNavigator.pop();
         }
       },
@@ -355,12 +357,34 @@ class NaviPaneState extends State<NaviPane>
   }
 
   Widget buildAppLogo({double size = 32}) {
-    return ClipOval(
-      child: Image.asset(
-        LauncherIconService.current.inAppLogoAsset,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xfff3b4cc),
+        borderRadius: BorderRadius.circular(size * .25),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.menu_book_rounded,
+            size: size * .7,
+            color: const Color(0xff472c3b),
+          ),
+          Positioned(
+            right: 1,
+            bottom: 0,
+            child: Text(
+              'X',
+              style: TextStyle(
+                fontSize: size * .38,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xff472c3b),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -405,11 +429,24 @@ class NaviPaneState extends State<NaviPane>
                             const SizedBox(width: 8),
                             buildAppLogo(),
                             const SizedBox(width: 10),
-                            const Text(
-                              'VeneraX',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
+                            const Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '玄果漫画',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  Text(
+                                    '基于 VeneraX',
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

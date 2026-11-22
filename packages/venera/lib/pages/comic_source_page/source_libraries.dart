@@ -7,7 +7,7 @@ class _ComicSourceList extends StatefulWidget {
   final ComicSourceLibrary library;
 
   /// Installs a source from [url], stamping it with the library's id as origin.
-  final Future<void> Function(String url, String originLibraryId) onAdd;
+  final Future<bool> Function(String url, String originLibraryId) onAdd;
 
   @override
   State<_ComicSourceList> createState() => _ComicSourceListState();
@@ -16,6 +16,44 @@ class _ComicSourceList extends StatefulWidget {
 class _ComicSourceListState extends State<_ComicSourceList> {
   List? json;
   bool loadFailed = false;
+  final Set<int> selected = {};
+  bool installing = false;
+  final List<String> installResults = [];
+  Future<void> installSelected() async {
+    final queue = selected.toList()..sort();
+    setState(() {
+      installing = true;
+      installResults.clear();
+    });
+    for (final index in queue) {
+      if (!mounted) return;
+      final entry = json![index];
+      final key = entry['key']?.toString();
+      final name = entry['name']?.toString() ?? key ?? '';
+      if (ComicSource.all().any((source) => source.key == key)) {
+        setState(() {
+          installResults.add(name + '：已安装，跳过');
+          selected.remove(index);
+        });
+        continue;
+      }
+      var success = false;
+      try {
+        final url = _resolveSourceDownloadUrl(
+          url: entry['url']?.toString(),
+          fileName: entry['fileName']?.toString(),
+          listUrl: library.url,
+        );
+        if (url != null) success = await widget.onAdd(url, library.id);
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {
+        installResults.add(name + (success ? '：安装成功' : '：安装失败'));
+        if (success) selected.remove(index);
+      });
+    }
+    if (mounted) setState(() => installing = false);
+  }
 
   ComicSourceLibrary get library => widget.library;
 
@@ -62,10 +100,7 @@ class _ComicSourceListState extends State<_ComicSourceList> {
 
   @override
   Widget build(BuildContext context) {
-    return PopUpWidgetScaffold(
-      title: library.name,
-      body: buildBody(),
-    );
+    return PopUpWidgetScaffold(title: library.name, body: buildBody());
   }
 
   Widget buildBody() {
@@ -85,9 +120,7 @@ class _ComicSourceListState extends State<_ComicSourceList> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              loadFailed
-                  ? Icons.cloud_off_outlined
-                  : Icons.inbox_outlined,
+              loadFailed ? Icons.cloud_off_outlined : Icons.inbox_outlined,
               size: 48,
               color: context.colorScheme.outline,
             ),
@@ -97,126 +130,199 @@ class _ComicSourceListState extends State<_ComicSourceList> {
               style: ts.s14.copyWith(color: context.colorScheme.outline),
             ),
             const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: load,
-              child: Text("Refresh".tl),
-            ),
+            FilledButton.tonal(onPressed: load, child: Text("Refresh".tl)),
           ],
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      itemCount: json!.length,
-      itemBuilder: (context, index) {
-        var entry = json![index];
-        var key = entry["key"]?.toString();
-        var installed = key != null && currentKey.contains(key);
-        var version = entry["version"]?.toString();
-        var description = entry["description"]?.toString();
-
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          decoration: BoxDecoration(
-            color: context.colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: context.colorScheme.outlineVariant.toOpacity(0.5),
-              width: 0.6,
+    final available = <int>{
+      for (var i = 0; i < json!.length; i++)
+        if (!currentKey.contains(json![i]['key']?.toString())) i,
+    };
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              TextButton(
+                onPressed: installing
+                    ? null
+                    : () => setState(() {
+                        selected.addAll(available);
+                      }),
+                child: const Text('全选未安装'),
+              ),
+              TextButton(
+                onPressed: installing ? null : () => setState(selected.clear),
+                child: const Text('清空选择'),
+              ),
+              FilledButton(
+                onPressed: installing || selected.isEmpty
+                    ? null
+                    : installSelected,
+                child: Text(
+                  installing
+                      ? '正在批量安装…'
+                      : '批量安装（' + selected.length.toString() + '）',
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (installResults.isNotEmpty)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 140),
+            child: ListView(
+              shrinkWrap: true,
+              children: installResults
+                  .map(
+                    (result) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 2,
+                      ),
+                      child: Text(result),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-            child: Row(
-              // Keep the action beside the title once a long description
-              // stretches the card.
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            itemCount: json!.length,
+            itemBuilder: (context, index) {
+              var entry = json![index];
+              var key = entry["key"]?.toString();
+              var installed = key != null && currentKey.contains(key);
+              var version = entry["version"]?.toString();
+              var description = entry["description"]?.toString();
+
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: context.colorScheme.outlineVariant.toOpacity(0.5),
+                    width: 0.6,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+                  child: Row(
+                    // Keep the action beside the title once a long description
+                    // stretches the card.
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              entry["name"]?.toString() ?? key ?? '',
-                              style: ts.s16,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (version != null) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    context.colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(version, style: ts.s12),
-                            ),
-                          ],
-                        ],
+                      Checkbox(
+                        value: selected.contains(index),
+                        onChanged: installing || installed
+                            ? null
+                            : (value) => setState(() {
+                                if (value == true) {
+                                  selected.add(index);
+                                } else {
+                                  selected.remove(index);
+                                }
+                              }),
                       ),
-                      if (description != null && description.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        // Unclamped on purpose: a truncated description hides
-                        // what a plugin actually does, so let it wrap.
-                        Text(
-                          description,
-                          style: ts.s12.copyWith(
-                            color: context.colorScheme.outline,
-                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    entry["name"]?.toString() ?? key ?? '',
+                                    style: ts.s16,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (version != null) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: context
+                                          .colorScheme
+                                          .surfaceContainerHighest,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(version, style: ts.s12),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (description != null &&
+                                description.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              // Unclamped on purpose: a truncated description hides
+                              // what a plugin actually does, so let it wrap.
+                              Text(
+                                description,
+                                style: ts.s12.copyWith(
+                                  color: context.colorScheme.outline,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
+                      ),
+                      const SizedBox(width: 8),
+                      installed
+                          ? Tooltip(
+                              message: "Installed".tl,
+                              child: Icon(
+                                Icons.check_circle,
+                                size: 22,
+                                color: context.colorScheme.primary,
+                              ),
+                            ).paddingRight(8)
+                          : FilledButton(
+                              child: Text("Add".tl),
+                              onPressed: installing
+                                  ? null
+                                  : () async {
+                                      var fileName = entry["fileName"];
+                                      var url = entry["url"];
+                                      var resolved = _resolveSourceDownloadUrl(
+                                        url: url?.toString(),
+                                        fileName: fileName?.toString(),
+                                        listUrl: library.url,
+                                      );
+                                      if (resolved == null) {
+                                        context.showMessage(
+                                          message:
+                                              "Cannot resolve the source download url. "
+                                                      "Please check the repo URL."
+                                                  .tl,
+                                        );
+                                        return;
+                                      }
+                                      await widget.onAdd(resolved, library.id);
+                                      if (!mounted) return;
+                                      setState(() {});
+                                    },
+                            ).fixHeight(32),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                installed
-                    ? Tooltip(
-                        message: "Installed".tl,
-                        child: Icon(
-                          Icons.check_circle,
-                          size: 22,
-                          color: context.colorScheme.primary,
-                        ),
-                      ).paddingRight(8)
-                    : Button.filled(
-                        child: Text("Add".tl),
-                        onPressed: () async {
-                          var fileName = entry["fileName"];
-                          var url = entry["url"];
-                          var resolved = _resolveSourceDownloadUrl(
-                            url: url?.toString(),
-                            fileName: fileName?.toString(),
-                            listUrl: library.url,
-                          );
-                          if (resolved == null) {
-                            context.showMessage(
-                              message:
-                                  "Cannot resolve the source download url. "
-                                          "Please check the repo URL."
-                                      .tl,
-                            );
-                            return;
-                          }
-                          await widget.onAdd(resolved, library.id);
-                          if (!mounted) return;
-                          setState(() {});
-                        },
-                      ).fixHeight(32),
-              ],
-            ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
@@ -358,7 +464,8 @@ class _SourceLibrariesPageState extends State<SourceLibrariesPage> {
     final urlController = TextEditingController(text: url);
     showDialog(
       context: App.rootContext,
-      builder: (context) {        return ContentDialog(
+      builder: (context) {
+        return ContentDialog(
           title: "Edit library".tl,
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -428,7 +535,7 @@ class _SourceLibrariesPageState extends State<SourceLibrariesPage> {
     showPopUpWidget(
       App.rootContext,
       _ComicSourceList(library, (url, originLibraryId) async {
-        await _installSourceFromUrl(url, originLibraryId);
+        return await _installSourceFromUrl(url, originLibraryId);
       }),
     );
   }
@@ -442,9 +549,7 @@ class _SourceLibrariesPageState extends State<SourceLibrariesPage> {
     } else if (count == 0) {
       context.showMessage(message: "No updates".tl);
     } else {
-      context.showMessage(
-        message: "@c updates".tlParams({"c": count}),
-      );
+      context.showMessage(message: "@c updates".tlParams({"c": count}));
     }
   }
 
@@ -566,7 +671,9 @@ class _SourceLibrariesPageState extends State<SourceLibrariesPage> {
                     const SizedBox(height: 2),
                     Text(
                       host,
-                      style: ts.s12.copyWith(color: context.colorScheme.outline),
+                      style: ts.s12.copyWith(
+                        color: context.colorScheme.outline,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -689,3 +796,4 @@ class _SourceLibrariesPageState extends State<SourceLibrariesPage> {
     );
   }
 }
+

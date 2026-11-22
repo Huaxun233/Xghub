@@ -586,5 +586,13 @@ class ComicSourceLibraryManager {
       appdata.settings[_migratedKey] = true;
       appdata.saveData(false);
     }
+    if (appdata.settings['xghubBuiltinComicLibraryV1'] != true) {
+      add(
+        'Venera configs',
+        'https://cdn.jsdelivr.net/gh/venera-app/venera-configs@latest/index.json',
+      );
+      appdata.settings['xghubBuiltinComicLibraryV1'] = true;
+      appdata.saveData(false);
+    }
   }
 }

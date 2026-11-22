@@ -18,16 +18,14 @@ class _ComicsPageState extends State<ComicsPage> {
   Future<void> _openImages() async {
     setState(() => _picking = true);
     try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.image,
-      );
+      final result = await FilePicker.pickFiles(type: FileType.image);
       if (!mounted || result.isEmpty) return;
       final pages = result.where((file) => file.path != null).toList()
         ..sort((a, b) => _compareNames(a.name, b.name));
       if (pages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('没有找到可读取的图片')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('没有找到可读取的图片')));
         return;
       }
       await Navigator.of(context).push<void>(
@@ -35,9 +33,9 @@ class _ComicsPageState extends State<ComicsPage> {
       );
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('无法打开所选图片')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('无法打开所选图片')));
       }
     } finally {
       if (mounted) setState(() => _picking = false);
@@ -46,13 +44,51 @@ class _ComicsPageState extends State<ComicsPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('漫画')),
+    appBar: AppBar(
+      title: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('玄果漫画'),
+          Text('基于 VeneraX', style: TextStyle(fontSize: 12)),
+        ],
+      ),
+    ),
     body: Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xfff3b4cc),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.menu_book_rounded,
+                    size: 64,
+                    color: Color(0xff472c3b),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Text(
+                      'X',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 24,
+                        color: Color(0xff472c3b),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _picking ? null : _openImages,
               icon: const Icon(Icons.folder_open),
@@ -133,7 +169,9 @@ class _ComicReaderState extends State<_ComicReader> {
         children: [
           IconButton(
             tooltip: '上一页',
-            onPressed: _page == 0 ? null : () => _controller.jumpToPage(_page - 1),
+            onPressed: _page == 0
+                ? null
+                : () => _controller.jumpToPage(_page - 1),
             icon: const Icon(Icons.chevron_left),
           ),
           IconButton(
