@@ -352,7 +352,12 @@ export default function Platform() {
                 className={"rounded-lg px-2 py-3 text-center text-sm sm:text-left " + (section === item.id ? "bg-pc text-on-pc font-semibold" : "text-mut hover:bg-s3")}>{item.label}</a>)}
           </nav>
           )}
-          <div className="mt-auto"><WebTheme /></div>
+          <div className="mt-auto grid gap-2">
+            <a className={button + ' text-center'} href="https://github.com/Huaxun233/Xghub/releases/download/xghub-v2.1.1-117/xghub-2.1.1%2B117-arm64-v8a.apk" target="_blank" rel="noopener noreferrer" aria-label="下载 Android 手机版">Android 下载</a>
+            <a className={button + ' text-center'} href="https://github.com/Huaxun233/Xghub/releases/download/xghub-v2.1.1-117/xghub-2.1.1%2B117-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer" aria-label="下载 Windows 版">Windows 下载</a>
+            <a className={button + ' text-center'} href="https://github.com/Huaxun233" target="_blank" rel="noopener noreferrer">作者主页</a>
+            <WebTheme />
+          </div>
       </aside>
       <main className="relative min-w-0 flex-1">
         {section === "comics" ? <Suspense fallback={<p role="status" className="p-8 text-mut">正在加载漫画阅读器…</p>}><Comics /></Suspense> : section === "home" || section === "library" || section === "search" ? (

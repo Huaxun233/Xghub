@@ -22,3 +22,7 @@ Open https://aokorin.xyz and choose Videos or Comics in the sidebar. Comics supp
 
 Built-in repository: open Comics → JavaScript plugins, sync the built-in repository, select a source and install it. The default index is the Venera configs jsDelivr URL above. Installation does not guarantee browser compatibility.
 
+
+网页侧栏提供 Android ARM64、Windows 安装包直链和「作者主页」GitHub 按钮。漫画页更名为玄果漫画，标注基于 VeneraX。仓库支持全选、多选、批量安装与逐项结果；多个已安装插件保存在本机并可切换。
+
+The sidebar provides Android and Windows installer links and the author GitHub profile. Xghub Comics credits VeneraX and supports repository multi-select, batch installation, per-source results and switching between locally saved plugins.

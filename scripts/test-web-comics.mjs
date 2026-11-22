@@ -8,7 +8,7 @@ try {
  await page.route('**/api/account/me', r => r.fulfill({json: {user:null}}));
  await page.route('https://comic-test.example/**', r => r.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWQkAAAAASUVORK5CYII=','base64')}));
  await page.goto((process.env.XGHUB_TEST_ORIGIN || 'http://127.0.0.1:1422') + '/#comics', {waitUntil:'domcontentloaded',timeout:90000});
- await page.getByRole('heading',{name:'漫画',exact:true}).waitFor();
+ await page.getByRole('heading',{name:'玄果漫画',exact:true}).waitFor();
  const fixture = {version:1,id:'test',name:'Test',comics:[{id:'one',title:'阅读验证',category:'测试',cover:'https://comic-test.example/cover.png',chapters:[{id:'c1',title:'第一章',pages:['https://comic-test.example/1.png']},{id:'c2',title:'第二章',pages:['https://comic-test.example/2.png']}]}]};
  await page.getByLabel('导入漫画目录').setInputFiles({name:'catalog.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});
  await page.getByRole('heading',{name:'阅读验证'}).click();
