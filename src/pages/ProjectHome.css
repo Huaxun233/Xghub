@@ -13,3 +13,5 @@ html.project-route,body.project-route,body.project-route #root{height:auto;min-h
 .portfolio-icon{width:52px;height:52px;display:grid;place-items:center;font-size:38px;line-height:1}
 .portfolio-tree .project-button{background:#b9dec7;color:#153c29!important}
 @media(max-width:760px){.portfolio-grid{grid-template-columns:1fr}}
+
+.project-brand .project-avatar{width:44px;height:44px;object-fit:cover;object-position:72% 35%;border-radius:12px;flex-shrink:0}

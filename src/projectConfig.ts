@@ -48,7 +48,7 @@ export interface ProjectConfig {
  title:string; introduction:string; backgroundColor:string; backgroundImage:string; theme:'light'|'dark'; galleryTitle:string;
  music:{url:string;title:string;autoplay:boolean;volume:number}; photos:{id:string;url:string;alt:string}[];
 }
-export const defaultProjectConfig=():ProjectConfig=>({projects:defaultProjects(),title:'Huaxun233 · 项目主页',introduction:'这里记录我的应用与小作品。选择一个项目，查看介绍并直接体验。',backgroundColor:'#f9f4f5',backgroundImage:'',theme:'light',galleryTitle:'照片墙',music:{url:'',title:'背景音乐',autoplay:false,volume:0.5},photos:[]});
+export const defaultProjectConfig=():ProjectConfig=>({projects:defaultProjects(),title:'hayasiの项目首页',introduction:'这里记录我的应用与小作品。选择一个项目，查看介绍并直接体验。',backgroundColor:'#f9f4f5',backgroundImage:'',theme:'light',galleryTitle:'照片墙',music:{url:'',title:'背景音乐',autoplay:false,volume:0.5},photos:[]});
 function text(v:unknown,max:number,label:string){if(typeof v!=='string'||v.length>max)throw new Error(label+'内容无效');return v.trim();}
 function media(v:unknown,optional=true){const s=text(v,2048,'地址');if(!s&&optional)return s;if(/^\/api\/project\/media\/[a-f0-9-]{36}\.(webp|png|jpg|gif|mp3|m4a|ogg|wav|webm)$/.test(s))return s;try{const u=new URL(s);if(u.protocol==='https:'&&!u.username&&!u.password)return u.href;}catch{}throw new Error('地址必须是 HTTPS 或已上传的文件');}
 export function parseProjectConfig(input:unknown):ProjectConfig {
