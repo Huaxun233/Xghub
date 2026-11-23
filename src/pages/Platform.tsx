@@ -358,8 +358,8 @@ export default function Platform() {
           </nav>
           )}
           <div className="mt-auto grid gap-2">
-            <a className={button + ' text-center'} href="https://github.com/Huaxun233/Xghub/releases/download/xghub-v2.1.8-124/guoapp-2.1.8%2B124-arm64-v8a.apk" target="_blank" rel="noopener noreferrer" aria-label="下载 Android 手机版">Android 下载</a>
-            <a className={button + ' text-center'} href="https://github.com/Huaxun233/Xghub/releases/download/xghub-v2.1.8-124/guoapp-2.1.8%2B124-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer" aria-label="下载 Windows 版">Windows 下载</a>
+            <a className={button + ' text-center'} href="https://github.com/Huaxun233/Xghub/releases/download/xghub-v2.1.9-125/guoapp-2.1.9%2B125-arm64-v8a.apk" target="_blank" rel="noopener noreferrer" aria-label="下载 Android 手机版">Android 下载</a>
+            <a className={button + ' text-center'} href="https://github.com/Huaxun233/Xghub/releases/download/xghub-v2.1.9-125/guoapp-2.1.9%2B125-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer" aria-label="下载 Windows 版">Windows 下载</a>
             <a className={button + ' text-center'} href="/">项目主页</a>
             <WebTheme />
           </div>
