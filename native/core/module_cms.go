@@ -379,6 +379,11 @@ func (engine *nativeEngine) cmsSites(ctx context.Context, address string) ([]cms
 	if len(sites) == 0 {
 		return nil, errors.New("配置里没有可用站点")
 	}
+	// 拉到的不是 TVBox JSON（比如运营商劫持页/登录页）时，把真实原因当错误报出来，
+	// 而不是在界面上误导为「没有兼容的 CMS 站点」。
+	if len(sites) == 1 && sites[0].Key == "" && sites[0].API == "" && sites[0].Reason != "" {
+		return nil, errors.New(sites[0].Reason)
+	}
 	return sites, nil
 }
 
