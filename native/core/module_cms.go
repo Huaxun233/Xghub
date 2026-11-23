@@ -354,12 +354,24 @@ func cmsModuleCode(site cmsSite) ([]byte, error) {
 }
 
 func (engine *nativeEngine) cmsSites(ctx context.Context, address string) ([]cmsSite, error) {
-	address = strings.TrimSpace(address)
+	// 容错：粘贴时常见的多余引号、缺 https:// 前缀。
+	address = strings.TrimSpace(strings.Trim(address, "'\"`"))
+	if address != "" && !strings.Contains(address, "://") {
+		address = "https://" + address
+	}
 	parsed, err := url.Parse(address)
 	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Hostname() == "" {
 		return nil, errors.New("请填写以 http:// 或 https:// 开头的站源配置地址")
 	}
 	raw, err := engine.fetchLimited(ctx, parsed.String(), cmsConfigBytes)
+	if err != nil {
+		// raw.githubusercontent.com 直连失败时回退 jsdelivr 镜像。
+		if mirror := cmsJsdelivrMirror(parsed.String()); mirror != "" {
+			if raw2, err2 := engine.fetchLimited(ctx, mirror, cmsConfigBytes); err2 == nil {
+				raw, err = raw2, nil
+			}
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("读取站源配置失败：%w", err)
 	}
@@ -368,6 +380,24 @@ func (engine *nativeEngine) cmsSites(ctx context.Context, address string) ([]cms
 		return nil, errors.New("配置里没有可用站点")
 	}
 	return sites, nil
+}
+
+// cmsJsdelivrMirror 把 raw.githubusercontent.com 地址映射成 cdn.jsdelivr.net 镜像，
+// 只处理 /{owner}/{repo}/{branch}/{path…} 形式。
+func cmsJsdelivrMirror(raw string) string {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Hostname() != "raw.githubusercontent.com" {
+		return ""
+	}
+	parts := strings.SplitN(strings.TrimPrefix(parsed.Path, "/"), "/", 4)
+	if len(parts) < 4 {
+		return ""
+	}
+	owner, repo, branch, rest := parts[0], parts[1], parts[2], parts[3]
+	if owner == "" || repo == "" || branch == "" {
+		return ""
+	}
+	return "https://cdn.jsdelivr.net/gh/" + owner + "/" + repo + "@" + branch + "/" + rest
 }
 
 func (engine *nativeEngine) cmsProbe(ctx context.Context, address string) (map[string]any, error) {
