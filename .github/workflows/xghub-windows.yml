@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: guoapp-modules/hongguo
+          repository: Huaxun233/hongguo-module
           path: bundled-modules/hongguo
       - uses: actions/checkout@v4
         with:

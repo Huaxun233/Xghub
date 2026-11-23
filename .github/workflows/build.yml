@@ -90,7 +90,7 @@ jobs:
       - &checkout-hongguo
         uses: actions/checkout@v4
         with:
-          repository: guoapp-modules/hongguo
+          repository: Huaxun233/hongguo-module
           path: bundled-modules/hongguo
       - &checkout-aigo
         uses: actions/checkout@v4
