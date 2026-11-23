@@ -64,6 +64,8 @@ const _cmsPresetUrls = [
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/9918.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/0826.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/jsm.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/fty.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/xiaosa/api.json',
 ];
 
 class _ModulesPageState extends State<ModulesPage>
@@ -574,7 +576,13 @@ class _ModulesPageState extends State<ModulesPage>
               children: [
                 for (final preset in _cmsPresetUrls)
                   ActionChip(
-                    label: Text(Uri.parse(preset).pathSegments.last),
+                    label: Text(() {
+                      final segments = Uri.parse(preset).pathSegments;
+                      return segments.length >= 2 &&
+                              segments.last == 'api.json'
+                          ? '${segments[segments.length - 2]}/${segments.last}'
+                          : segments.last;
+                    }()),
                     onPressed: enabled
                         ? () {
                             _cmsUrl.text = preset;
