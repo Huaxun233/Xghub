@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -14,6 +15,12 @@ import (
 )
 
 const cmsConfigBytes = 4 << 20
+
+// looksLikeHTML 判断拉到的内容是否是网页（劫持页/错误页）。
+func looksLikeHTML(raw []byte) bool {
+	head := strings.ToLower(strings.TrimSpace(string(raw[:min(len(raw), 256)])))
+	return strings.HasPrefix(head, "<!doctype html") || strings.HasPrefix(head, "<html") || strings.Contains(head, "<head")
+}
 
 // cmsSite 是 TVBox 配置里一个 CMS 资源站点。
 type cmsSite struct {
@@ -56,9 +63,20 @@ func cmsHostName(raw string) string {
 
 // parseTVBoxSites 解析 TVBox 配置，返回兼容与不兼容的站点。
 func parseTVBoxSites(raw []byte) []cmsSite {
+	// 容错：UTF-8 BOM 会让 json.Unmarshal 直接失败。
+	trimmed := bytes.TrimPrefix(raw, []byte{0xEF, 0xBB, 0xBF})
 	var config cmsConfig
-	if err := json.Unmarshal(raw, &config); err != nil {
-		return []cmsSite{{Reason: "配置不是有效的 TVBox JSON（缺少 sites 数组）"}}
+	if err := json.Unmarshal(trimmed, &config); err != nil {
+		summary := "配置不是有效的 TVBox JSON"
+		if looksLikeHTML(raw) {
+			summary = "拉到的内容是网页而不是 TVBox 配置（可能被运营商劫持，或地址不对）"
+		}
+		preview := strings.TrimSpace(string(raw))
+		if len(preview) > 120 {
+			preview = preview[:120] + "…"
+		}
+		preview = strings.ReplaceAll(preview, "\n", " ")
+		return []cmsSite{{Reason: fmt.Sprintf("%s（解析错误：%v；内容开头：%s）", summary, err, preview)}}
 	}
 	sites := []cmsSite{}
 	seen := map[string]bool{}
