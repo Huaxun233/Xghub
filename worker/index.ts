@@ -1,5 +1,5 @@
 import { videoRepositoryPages, readUpstream } from "./videoRepository";
-import { GUO_MODULE_INDEX, parseGuoModules } from "../src/guoModuleIndex";
+import { GUO_MODULE_INDEX, EXTRA_GUO_MODULES, parseGuoModules } from "../src/guoModuleIndex";
 import { guoModuleFile, guoProxy } from "./guoModule";
 import { project } from './project';
 import { comicRepository } from './comicRepository';
@@ -33,9 +33,11 @@ async function api(request: Request, env: Env, url: URL) {
     await limit(env, "guo-module-index:" + clientAddress(request));
     try {
       const modules = parseGuoModules(JSON.parse(await readUpstream(new URL(GUO_MODULE_INDEX))));
+      const seen = new Set(modules.map(item => item.id));
+      for (const extra of EXTRA_GUO_MODULES) if (!seen.has(extra.id)) modules.push(extra);
       return json({ modules }, 200, { "Cache-Control": "public, max-age=120" });
     } catch {
-      throw new HttpError(502, "小果模块仓库暂时无法读取");
+      throw new HttpError(502, "玄果模块仓库暂时无法读取");
     }
   }
 

@@ -59,7 +59,7 @@ export type GuoMedia = {
 
 const STATE_PREFIX = "xghub.guoModule.state.";
 
-/** 网页版小果模块运行时：数据 URL/Blob Worker + 同步 XHR，接口对齐 native/core 的 host 对象。 */
+/** 网页版玄果模块运行时：数据 URL/Blob Worker + 同步 XHR，接口对齐 native/core 的 host 对象。 */
 export class GuoModuleRuntime {
   readonly manifest: GuoModuleManifest;
   private worker: Worker;
@@ -594,7 +594,7 @@ const host = {
   prepareWebMedia: media => media,
   loadState: name => (name in state ? state[name] : null),
   saveState(name, value) { state[name] = String(value ?? ''); stateDirty = true; },
-  log: message => console.log('[小果模块]', MODULE_SOURCE, message),
+  log: message => console.log('[玄果模块]', MODULE_SOURCE, message),
   retries: () => 0,
   maxPages: () => 20,
   reserve: request => { allowedAddress(String(request?.url ?? '')); return 0; },

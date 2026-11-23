@@ -8,6 +8,11 @@ const PROXY_BODY_BYTES = 8 * 1024 * 1024;
 const PROXY_RESPONSE_BYTES = 20 * 1024 * 1024;
 const FORBIDDEN_HEADER = /^(cookie|user-agent|referer|origin|host|content-length|connection|accept-encoding)$/i;
 
+/** 本站额外内置的模块（不在官方索引里，id → {repo, tag}）。 */
+const EXTRA_MODULE_ENTRIES: Array<{ id: string; repo: string; tag: string; adult: boolean }> = [
+  { id: "aigo", repo: "Huaxun233/aigo-module", tag: "v1.0.0", adult: true },
+];
+
 type IndexEntry = {
   id?: unknown;
   repo?: unknown;
@@ -58,16 +63,22 @@ export async function guoModuleFile(id: string, url: URL): Promise<Response> {
   const cached = await caches.default.match(cacheKey);
   if (cached) return cached;
 
-  let index: unknown;
-  try {
-    index = JSON.parse(await readUpstream(new URL(GUO_MODULE_INDEX)));
-  } catch {
-    throw new HttpError(502, "小果模块仓库暂时无法读取");
+  const extra = EXTRA_MODULE_ENTRIES.find(item => item.id === id);
+  let entry: IndexEntry | undefined;
+  if (extra) {
+    entry = { id: extra.id, repo: extra.repo, tag: extra.tag, adult: extra.adult };
+  } else {
+    let index: unknown;
+    try {
+      index = JSON.parse(await readUpstream(new URL(GUO_MODULE_INDEX)));
+    } catch {
+      throw new HttpError(502, "玄果模块仓库暂时无法读取");
+    }
+    const record = index as { format?: unknown; modules?: unknown };
+    if (record?.format !== 1 || !Array.isArray(record.modules)) throw new HttpError(502, "玄果模块索引格式不受支持");
+    entry = record.modules.find((item): item is IndexEntry =>
+      !!item && typeof item === "object" && (item as IndexEntry).id === id);
   }
-  const record = index as { format?: unknown; modules?: unknown };
-  if (record?.format !== 1 || !Array.isArray(record.modules)) throw new HttpError(502, "小果模块索引格式不受支持");
-  const entry = record.modules.find((item): item is IndexEntry =>
-    !!item && typeof item === "object" && (item as IndexEntry).id === id);
   if (!entry) throw new HttpError(404, "模块不存在");
   if (typeof entry.repo !== "string" || !/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(entry.repo) ||
       typeof entry.tag !== "string" || !/^v\d+\.\d+\.\d+$/.test(entry.tag)) {
