@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+const result=await build({entryPoints:['src/projectConfig.ts'],bundle:true,write:false,format:'esm',platform:'node'});
+const {defaultProjectConfig,parseProjectConfig}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
+const config=defaultProjectConfig();
+assert.equal(config.projects.length,2);
+assert.equal(config.projects[1].url,'https://christmas-tree-studio-cd0.pages.dev/');
+const old={...config};delete old.projects;
+assert.equal(parseProjectConfig(old).projects.length,2);
+const changed=parseProjectConfig({...config,projects:[{id:'new',name:'新项目',description:'自定义介绍',url:'https://example.com',sourceUrl:'',icon:'🌱'}]});
+assert.equal(changed.projects[0].description,'自定义介绍');
+assert.deepEqual(parseProjectConfig({...config,projects:[]}).projects,[]);
+for(const url of ['javascript:alert(1)','http://example.com','https://user:pw@example.com']) assert.throws(()=>parseProjectConfig({...changed,projects:[{...changed.projects[0],url}]}));
+assert.throws(()=>parseProjectConfig({...config,projects:[config.projects[0],config.projects[0]]}));
+console.log('PASS projects migration, CRUD data, safe links, empty lists and duplicates');

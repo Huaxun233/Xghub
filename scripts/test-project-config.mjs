@@ -2,7 +2,7 @@ import {build} from 'esbuild';
 import assert from 'node:assert/strict';
 const bundled=await build({entryPoints:['src/projectConfig.ts'],bundle:true,write:false,platform:'node',format:'esm'});
 const {defaultProjectConfig,parseProjectConfig}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
-const config=defaultProjectConfig();assert.equal(config.title,'玄果 Xghub');assert.deepEqual(config.photos,[]);assert.equal(config.music.autoplay,false);
+const config=defaultProjectConfig();assert.equal(config.title,'Huaxun233 · 项目主页');assert.deepEqual(config.photos,[]);assert.equal(config.music.autoplay,false);
 const changed=parseProjectConfig({...config,backgroundImage:'https://images.example/photo.webp',music:{url:'/api/project/media/12345678-1234-4234-8234-123456789abc.mp3',title:'Music',autoplay:false,volume:0.4},photos:[{id:'one',url:'https://images.example/a.jpg',alt:'照片'}]});assert.equal(changed.photos.length,1);assert.equal(changed.music.volume,0.4);
 for(const url of ['javascript:alert(1)','http://images.example/a.png','https://user:pass@images.example/a.png','/admin','//images.example/a.png'])assert.throws(()=>parseProjectConfig({...config,backgroundImage:url}),/地址/);
 assert.throws(()=>parseProjectConfig({...config,backgroundColor:'red;display:none'}),/颜色/);assert.throws(()=>parseProjectConfig({...config,theme:'other'}),/主题/);assert.throws(()=>parseProjectConfig({...config,music:{...config.music,volume:2}}),/音量/);

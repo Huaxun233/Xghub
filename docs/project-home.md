@@ -23,3 +23,9 @@ Local image uploads are resized to a maximum 2400px edge and encoded as WebP. Up
 Uploads use the existing Cloudflare D1 database with chunked media storage by default; no R2 activation or payment details are needed. The library is capped at 200 files / 100MB total and remains subject to Cloudflare free-tier quotas. This is a small project gallery, not video hosting. An optional `PROJECT_MEDIA` R2 binding remains compatible but is not used by this deployment. Apply D1 migration `0004_project_settings.sql` before deployment. Keep admin credentials and private production configuration out of Git.
 
 Rollback: deploy the previous Worker/frontend version. The additive settings table and private bucket may remain; existing account, catalog and reading data are unaffected.
+
+## 项目列表 / Project list
+
+在后台「项目首页管理 → 项目列表」添加项目，填写名称、介绍、HTTPS 项目地址、可选源码地址和表情图标。可上下调整顺序或移除，点击「保存并发布首页」后生效。最多30个项目，介绍最多2000字，整份配置仍受接口大小限制。旧配置自动补入玄果和圣诞树。
+
+Use the Project list editor in homepage administration to add, edit, reorder or remove projects. Each project has a name, description, HTTPS destination, optional source URL and emoji icon. Save to publish the list to the homepage. Legacy configurations receive the two initial projects automatically.
