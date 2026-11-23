@@ -122,7 +122,10 @@ export async function guoProxy(request: Request, url: URL): Promise<Response> {
     throw new HttpError(403, "模块清单未声明访问 " + targetUrl.hostname);
   }
 
-  const method = request.method === "GET" || request.method === "HEAD" ? request.method : "POST";
+  // shim 的重试统一用 POST 发起，m 参数声明模块原始的 GET/HEAD 方法
+  const requested = (url.searchParams.get("m") || "").toUpperCase();
+  const method = requested === "GET" || requested === "HEAD" ? requested
+    : request.method === "GET" || request.method === "HEAD" ? request.method : "POST";
   const headers: Record<string, string> = {};
   const rawHeaders = request.headers.get("x-guo-headers");
   if (rawHeaders) {
