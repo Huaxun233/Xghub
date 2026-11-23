@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -22,13 +23,53 @@ func looksLikeHTML(raw []byte) bool {
 	return strings.HasPrefix(head, "<!doctype html") || strings.HasPrefix(head, "<html") || strings.Contains(head, "<head")
 }
 
+// cmsFlexBool 容忍 TVBox 配置把布尔字段写成 0/1 数字或 "true"/"false"/"0"/"1" 字符串。
+type cmsFlexBool struct {
+	Value bool
+	Set   bool
+}
+
+func (b *cmsFlexBool) UnmarshalJSON(data []byte) error {
+	s := strings.TrimSpace(strings.Trim(string(data), `"`))
+	b.Set = true
+	switch s {
+	case "true", "1":
+		b.Value = true
+	case "false", "0", "", "null":
+		b.Value = false
+	default:
+		// 未知值按真处理还是假？TVBox 语义未知，保守按 false。
+		b.Value = false
+	}
+	return nil
+}
+
+// cmsFlexInt 容忍 TVBox 配置把数字字段写成字符串（"type":"3"）。
+type cmsFlexInt struct {
+	Value int
+	Set   bool
+}
+
+func (i *cmsFlexInt) UnmarshalJSON(data []byte) error {
+	s := strings.TrimSpace(strings.Trim(string(data), `"`))
+	if s == "null" || s == "" {
+		return nil
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return fmt.Errorf("不是有效数字: %q", s)
+	}
+	i.Value, i.Set = n, true
+	return nil
+}
+
 // cmsSite 是 TVBox 配置里一个 CMS 资源站点。
 type cmsSite struct {
-	Key        string `json:"key"`
-	Name       string `json:"name"`
-	API        string `json:"api"`
-	Type       int    `json:"type"`
-	Searchable *bool  `json:"searchable"`
+	Key        string      `json:"key"`
+	Name       string      `json:"name"`
+	API        string      `json:"api"`
+	Type       int         `json:"type"`
+	Searchable *cmsFlexBool `json:"searchable"`
 
 	// 解析结果。
 	Format    string `json:"format"` // "json" 或 "xml"
@@ -40,11 +81,11 @@ type cmsSite struct {
 
 type cmsConfig struct {
 	Sites []struct {
-		Key        string `json:"key"`
-		Name       string `json:"name"`
-		Type       int    `json:"type"`
-		API        string `json:"api"`
-		Searchable *bool  `json:"searchable"`
+		Key        string       `json:"key"`
+		Name       string       `json:"name"`
+		Type       cmsFlexInt   `json:"type"`
+		API        string       `json:"api"`
+		Searchable *cmsFlexBool `json:"searchable"`
 	} `json:"sites"`
 }
 
@@ -85,7 +126,7 @@ func parseTVBoxSites(raw []byte) []cmsSite {
 		if name == "" {
 			name = strings.TrimSpace(entry.Key)
 		}
-		site := cmsSite{Key: strings.TrimSpace(entry.Key), Name: name, API: strings.TrimSpace(entry.API), Type: entry.Type, Searchable: entry.Searchable}
+		site := cmsSite{Key: strings.TrimSpace(entry.Key), Name: name, API: strings.TrimSpace(entry.API), Type: entry.Type.Value, Searchable: entry.Searchable}
 		switch site.Type {
 		case 0:
 			site.Format = "xml"
