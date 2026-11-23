@@ -62,10 +62,15 @@ const _tabLabels = ['已安装', '在线仓库', '内置', '站源导入', '手�
 
 const _cmsPresetUrls = [
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/9918.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/99188.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/0826.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/jsm.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/fty.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/xiaosa/api.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/dianshi.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/0825.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/0821.json',
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/0827.json',
 ];
 
 class _ModulesPageState extends State<ModulesPage>
