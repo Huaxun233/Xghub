@@ -1,9 +1,10 @@
-import GuoModules from "../components/GuoModules";
+import GuoModules, { GuoModuleTrial } from "../components/GuoModules";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import SourceUrlInput from "../components/SourceUrlInput";
 import RepositorySources from "../components/RepositorySources";
 import VideoSurface, { type VideoHandle } from "../components/VideoSurface";
 import { IClapper, IHist, ILink, IStar, IStarF } from "../icons";
+import { readPins, removePin, type GuoPin } from "../guoModulePins";
 import {
   LINKS, MAX_SOURCE_BYTES, parseEpisode, parseSource, readLibrary, saveLibrary,
   type Episode, type Library, type Series, type Source,
@@ -112,6 +113,8 @@ export default function Videos({ active, bottomInset = 0, platform }: {
   const [url, setUrl] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [pins, setPins] = useState<GuoPin[]>(() => readPins());
+  const [openPin, setOpenPin] = useState("");
   const player = useRef<HTMLElement>(null);
 
   const update = (change: (previous: Library) => Library) => {
@@ -279,6 +282,21 @@ export default function Videos({ active, bottomInset = 0, platform }: {
         </form>}
         {error && <p role="alert" className="text-sm text-danger">{error}</p>}
         {message && <p role="status" className="text-sm text-mut">{message}</p>}
+        {pins.length > 0 && <div className="space-y-3 rounded-(--r-md) bg-s1 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold">模块源</span>
+            {pins.map(pin => <span key={pin.id} className="flex items-center gap-1">
+              <button type="button" aria-pressed={openPin === pin.id}
+                className={openPin === pin.id ? primary + " !px-2.5 !py-1 text-xs" : button + " !px-2.5 !py-1 text-xs"}
+                onClick={() => setOpenPin(openPin === pin.id ? "" : pin.id)}>{pin.name}</button>
+              <button type="button" aria-label={"移除模块源 " + pin.name} className="text-xs text-mut hover:text-danger"
+                onClick={() => { setPins(removePin(pin.id)); if (openPin === pin.id) setOpenPin(""); }}>×</button>
+            </span>)}
+          </div>
+          {openPin && pins.filter(pin => pin.id === openPin).map(pin => (
+            <GuoModuleTrial key={pin.id} module={pin} onClose={() => setOpenPin("")} />
+          ))}
+        </div>}
         {(!platform || platform.section === "sources") && <>
           <RepositorySources hosted={Boolean(platform)} onLoad={source => {
             setError("");

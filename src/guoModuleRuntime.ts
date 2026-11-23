@@ -385,8 +385,7 @@ function allowedAddress(raw) {
 }
 const FORBIDDEN_HEADER = /^(cookie|user-agent|referer|origin|host|content-length|connection|accept-encoding)$/i;
 const BODY_LIMIT = 20 * 1024 * 1024;
-function syncFetch(url, request) {
-  allowedAddress(url);
+function xhrOnce(url, request) {
   const xhr = new XMLHttpRequest();
   xhr.open(request.method, url, false);
   xhr.timeout = Math.min(Math.max(request.timeoutMs, 1), 60000);
@@ -409,6 +408,30 @@ function syncFetch(url, request) {
   if (networkError || status === 0) {
     const error = new Error('网络请求失败'); error.blocked = false; error.status = 0; error.oversized = false; throw error;
   }
+  return { status, headers, body, responseURL: xhr.responseURL || url };
+}
+function proxyAddress(url, request) {
+  const params = new URLSearchParams();
+  params.set('id', MODULE_SOURCE);
+  params.set('u', url);
+  params.set('m', request.method);
+  return self.location.origin + '/api/guo-proxy?' + params.toString();
+}
+function syncFetch(url, request) {
+  allowedAddress(url);
+  let response;
+  try {
+    response = xhrOnce(url, request);
+  } catch (error) {
+    // Blob Worker 的跨域 XHR 会被浏览器 CORS 掐掉（status 0）——改走同源代理重试一次
+    if (!error || error.status !== 0) throw error;
+    response = xhrOnce(proxyAddress(url, request), {
+      ...request,
+      method: 'POST',
+      headers: { 'x-guo-headers': JSON.stringify(request.headers || {}) },
+    });
+  }
+  const { status, headers, body, responseURL } = response;
   if (body.length > request.limit) {
     const error = new Error('响应内容过大'); error.oversized = true; error.status = status; error.blocked = false; throw error;
   }
@@ -416,7 +439,7 @@ function syncFetch(url, request) {
   if (!ok) {
     const error = new Error('HTTP ' + status); error.status = status; error.body = body; error.blocked = false; error.oversized = false; throw error;
   }
-  return { status, headers, body, blocked: false, oversized: false, url: xhr.responseURL || url };
+  return { status, headers, body, blocked: false, oversized: false, url: responseURL };
 }
 function moduleFetch(request) {
   request = request || {};

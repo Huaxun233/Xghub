@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import VideoSurface from "./VideoSurface";
 import { syncGuoModules, type GuoModule } from "../guoModules";
 import { GuoModuleRuntime, type GuoChapter, type GuoDrama, type GuoMedia } from "../guoModuleRuntime";
+import { addPin, readPins, removePin } from "../guoModulePins";
 
 function coverOf(drama: GuoDrama): string | undefined {
   for (const key of ["coverUrl", "cover", "image", "imageUrl", "img", "pic", "poster", "thumb", "thumbnail"]) {
@@ -21,7 +22,8 @@ function mediaSource(media: GuoMedia): { src: string; direct: "file" | "hls" } |
   return null;
 }
 
-function GuoModuleTrial({ module, onClose }: { module: GuoModule; onClose: () => void }) {
+export function GuoModuleTrial({ module, onClose, onReload }: {  module: Pick<GuoModule, "id" | "name">; onClose: () => void; onReload?: () => void;
+}) {
   const [runtime, setRuntime] = useState<GuoModuleRuntime | null>(null);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("正在加载模块…");
@@ -33,6 +35,7 @@ function GuoModuleTrial({ module, onClose }: { module: GuoModule; onClose: () =>
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState<{ drama: GuoDrama; chapters: GuoChapter[] } | null>(null);
   const [playing, setPlaying] = useState<{ src: string; direct: "file" | "hls"; title: string } | null>(null);
+  const [pinned, setPinned] = useState(() => readPins().some(pin => pin.id === module.id));
   const busy = useRef(false);
 
   useEffect(() => {
@@ -43,7 +46,7 @@ function GuoModuleTrial({ module, onClose }: { module: GuoModule; onClose: () =>
       try {
         const result = await instance.categories(false);
         const list = Array.isArray(result) ? result : result?.items ?? [];
-        setCategories(list.filter(item => item && typeof item.id === "string").slice(0, 60));
+        setCategories((list ?? []).filter(item => item && typeof item.id === "string").slice(0, 60));
         setStatus("");
       } catch (failure) {
         setStatus("");
@@ -78,7 +81,7 @@ function GuoModuleTrial({ module, onClose }: { module: GuoModule; onClose: () =>
     setError("");
     try {
       const result = await runtime.detail(String(drama.sourceId ?? drama.id));
-      setDetail(result);
+      setDetail({ drama: result?.drama ?? drama, chapters: Array.isArray(result?.chapters) ? result.chapters : [] });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "详情读取失败");
     } finally { busy.current = false; }
@@ -114,7 +117,7 @@ function GuoModuleTrial({ module, onClose }: { module: GuoModule; onClose: () =>
       <div className="overflow-hidden rounded-xl bg-black">
         <VideoSurface src={playing.src} direct={playing.direct} autoPlay active className="aspect-video w-full" />
       </div>
-      <p className="text-xs text-mut">网页版无法附带模块声明的 Cookie / Referer 凭据，部分站点可能无法播放。</p>
+      <p className="text-xs text-mut">部分站点需要 Cookie / Referer 凭据，若播放失败请在客户端使用。</p>
     </div>
   );
 
@@ -141,10 +144,23 @@ function GuoModuleTrial({ module, onClose }: { module: GuoModule; onClose: () =>
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold">网页试用 · {module.name}</p>
-        <button type="button" className="shrink-0 rounded-lg border border-s3 px-2 py-1 text-xs" onClick={onClose}>关闭</button>
+        <p className="text-sm font-semibold">{module.name}</p>
+        <div className="flex shrink-0 gap-2">
+          <button type="button" className="rounded-lg border border-s3 px-2 py-1 text-xs hover:border-primary"
+            onClick={() => {
+              if (pinned) { removePin(module.id); setPinned(false); }
+              else { addPin({ id: module.id, name: module.name }); setPinned(true); }
+            }}>
+            {pinned ? "从首页移除" : "添加到首页"}
+          </button>
+          <button type="button" className="rounded-lg border border-s3 px-2 py-1 text-xs" onClick={onClose}>关闭</button>
+        </div>
       </div>
       {status && <p className="text-sm text-mut">{status}</p>}
+      {error && <p role="alert" className="flex flex-wrap items-center gap-2 text-sm text-danger">
+        {error}
+        {onReload && <button type="button" className="rounded-lg border border-s3 px-2 py-1 text-xs" onClick={onReload}>重新加载</button>}
+      </p>}
       <form className="flex gap-2" onSubmit={event => {
         event.preventDefault();
         if (query.trim()) void run(() => runtime!.search(1, query.trim()), 1);
@@ -195,6 +211,7 @@ export default function GuoModules({ hosted = false }: { hosted?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [trial, setTrial] = useState<GuoModule | null>(null);
+  const [trialKey, setTrialKey] = useState(0);
 
   async function sync() {
     setBusy(true);
@@ -213,7 +230,9 @@ export default function GuoModules({ hosted = false }: { hosted?: boolean }) {
         {busy ? "正在同步…" : "同步小果模块"}
       </button>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      {trial && <div className="rounded-xl border border-s3 p-3"><GuoModuleTrial module={trial} onClose={() => setTrial(null)} /></div>}
+      {trial && <div className="rounded-xl border border-s3 p-3">
+        <GuoModuleTrial key={trialKey} module={trial} onClose={() => setTrial(null)} onReload={() => setTrialKey(key => key + 1)} />
+      </div>}
       {modules && <div>
         <p role="status" className="text-sm">已读取 {modules.length} 个模块</p>
         <ul className="mt-2 space-y-1">

@@ -1,6 +1,6 @@
 import { videoRepositoryPages, readUpstream } from "./videoRepository";
 import { GUO_MODULE_INDEX, parseGuoModules } from "../src/guoModuleIndex";
-import { guoModuleFile } from "./guoModule";
+import { guoModuleFile, guoProxy } from "./guoModule";
 import { project } from './project';
 import { comicRepository } from './comicRepository';
 import { comicState } from './comicState';
@@ -43,6 +43,11 @@ async function api(request: Request, env: Env, url: URL) {
   if (method === "GET" && guoModuleRoute) {
     await limit(env, "guo-module-file:" + clientAddress(request));
     return guoModuleFile(guoModuleRoute[1], url);
+  }
+
+  if (pathname === "/api/guo-proxy") {
+    await limit(env, "guo-proxy:" + clientAddress(request));
+    return guoProxy(request, url);
   }
 
   const projectResponse = await project(request, env, url);
