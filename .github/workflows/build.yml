@@ -14,7 +14,7 @@ env:
   GOSUMDB: sum.golang.org
   UPDATE_SERVER_URL: ${{ vars.UPDATE_SERVER_URL }}
   PACKAGE_NAME: ${{ vars.PACKAGE_NAME }}
-  BUNDLED_MODULES: bundled-modules/hongguo,bundled-modules/aigo
+  BUNDLED_MODULES: bundled-modules/aigo
   PYTHONUTF8: '1'
   PROJECT_URL: ${{ vars.PROJECT_URL }}
   TELEGRAM_GROUP_URL: ${{ vars.TELEGRAM_GROUP_URL }}
@@ -44,8 +44,6 @@ jobs:
         continue-on-error: true
       # 测试当前不阻塞出包（开发优先、集中验证暂缓），结果仍会显示在运行详情里。
       - run: flutter test --dart-define=DISABLE_REMOTE_IMAGES=true
-        continue-on-error: true
-      - run: flutter test --dart-define=DISABLE_REMOTE_IMAGES=true --dart-define=ONLY_HONGGUO=true
         continue-on-error: true
       - run: go test -race ./...
         working-directory: native
@@ -87,11 +85,6 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - &checkout-hongguo
-        uses: actions/checkout@v4
-        with:
-          repository: Huaxun233/hongguo-module
-          path: bundled-modules/hongguo
       - &checkout-aigo
         uses: actions/checkout@v4
         with:
@@ -170,7 +163,6 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - *checkout-hongguo
       - *checkout-aigo
       - *setup-go
       - *setup-python
@@ -203,7 +195,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - *checkout-hongguo
       - *checkout-aigo
       - *setup-python
       - *setup-go
@@ -238,7 +229,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - *checkout-hongguo
       - *checkout-aigo
       - *setup-python
       - *setup-go
@@ -288,7 +278,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > notes.md <<EOF
-          版本 ${VERSION}。安装包内置红果站源与爱果站源，其余站源在 设置 › 站源 › 模块管理 的模块商店安装。
+          版本 ${VERSION}。安装包内置爱果站源，其余站源在 设置 › 站源 › 模块管理 的模块商店安装。
 
           Android：
           - *-arm64-v8a.apk：适用于较新的安卓设备

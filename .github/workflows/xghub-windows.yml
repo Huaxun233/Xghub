@@ -10,7 +10,7 @@ env:
   GIT_CONFIG_KEY_0: core.longpaths
   GIT_CONFIG_VALUE_0: 'true'
   PACKAGE_NAME: xyz.aokorin.xghub
-  BUNDLED_MODULES: bundled-modules/hongguo,bundled-modules/aigo
+  BUNDLED_MODULES: bundled-modules/aigo
   PYTHONUTF8: '1'
 jobs:
   windows:
@@ -18,10 +18,6 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: Huaxun233/hongguo-module
-          path: bundled-modules/hongguo
       - uses: actions/checkout@v4
         with:
           repository: Huaxun233/aigo-module
@@ -73,4 +69,5 @@ jobs:
           path: dist/windows/*
           if-no-files-found: error
           retention-days: 14
+
 
