@@ -518,7 +518,7 @@ class _ModulesPageState extends State<ModulesPage>
     }
     final accepted = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('导入 ${keys.length} 个站源？'),
         content: const Text('兼容的 CMS 站点会生成模块并安装，安装后可以在「已安装」里管理。'),
         actions: [
@@ -526,14 +526,14 @@ class _ModulesPageState extends State<ModulesPage>
             radius: 20,
             child: TextButton(
               autofocus: true,
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('取消'),
             ),
           ),
           FocusRing(
             radius: 20,
             child: FilledButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text('导入'),
             ),
           ),

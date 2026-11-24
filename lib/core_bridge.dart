@@ -719,6 +719,8 @@ class NativeRepository extends AppRepository {
             Duration(
               seconds: action == 'moveDownloads' || action == 'deleteAllData'
                   ? 620
+                  : action == 'cmsInstall'
+                  ? 300
                   : action == 'danmaku'
                   ? 15
                   : action == 'preload'
