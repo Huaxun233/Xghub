@@ -62,6 +62,7 @@ List<SourceModule> _arranged(List<SourceModule> modules, List<String> order) {
 const _tabLabels = ['已安装', '在线仓库', '内置', '站源导入', '手动'];
 
 const _cmsPresetUrls = [
+  'https://raw.githubusercontent.com/Huaxun233/tvbox/master/yinghua.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/9918.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/99188.json',
   'https://raw.githubusercontent.com/Huaxun233/tvbox/master/0826.json',
