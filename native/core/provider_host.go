@@ -263,6 +263,7 @@ func (d *Downloader) directClient() *http.Client {
 		if d.proxyRouter != nil {
 			transport.Proxy = d.proxyRouter.proxy
 		}
+		preferIPv4Dial(transport)
 		d.direct = &http.Client{
 			Transport: transport,
 			CheckRedirect: func(request *http.Request, via []*http.Request) error {

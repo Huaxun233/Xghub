@@ -262,6 +262,7 @@ func newNativeEngine(directory, cache, downloads string) (*nativeEngine, error) 
 	transport.MaxIdleConnsPerHost = 8
 	transport.ResponseHeaderTimeout = 20 * time.Second
 	transport.Proxy = router.proxy
+	preferIPv4Dial(transport)
 	cdn := newCDNTransport(transport, newDNSResolver(transport))
 	d.client = &http.Client{Transport: newHuangguoBrowserTransport(cdn, d), Timeout: 45 * time.Second,
 		CheckRedirect: func(request *http.Request, via []*http.Request) error {
