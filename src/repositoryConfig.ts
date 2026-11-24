@@ -1,5 +1,16 @@
 export const REPOSITORY = "https://github.com/Huaxun233/tvbox";
-export const REPOSITORY_CONFIGS = ["9918.json", "0826.json", "jsm.json"] as const;
+export const REPOSITORY_CONFIGS = [
+  "9918.json",
+  "99188.json",
+  "0826.json",
+  "jsm.json",
+  "fty.json",
+  "xiaosa/api.json",
+  "dianshi.json",
+  "0825.json",
+  "0821.json",
+  "0827.json",
+] as const;
 export type RepositorySite = { key: string; name: string; endpoint?: string; format?: "xml" | "json"; reason?: string };
 
 export function record(value: unknown): Record<string, unknown> {
