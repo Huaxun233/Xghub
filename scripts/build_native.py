@@ -59,7 +59,8 @@ if options.platform == 'android':
         if not compiler.exists():
             raise SystemExit('缺少 Android NDK 编译器：' + str(compiler))
         output = root / 'android' / 'app' / 'src' / 'main' / 'jniLibs' / abi / 'libduanju_core.so'
-        extra = {'CGO_LDFLAGS': '-Wl,-z,max-page-size=16384'}
+        extra = {'CGO_LDFLAGS': '-Wl,-z,max-page-size=16384',
+                 'CXX': str(compiler) + '++'}
         if architecture == 'arm':
             extra['GOARM'] = '7'
         build('android', architecture, compiler, output, extra)
