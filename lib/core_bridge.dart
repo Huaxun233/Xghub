@@ -202,6 +202,11 @@ abstract class AppRepository {
     required SoraniCaptchaTrack track,
   }) async => throw AppFailure('当前版本不支持登录青空次元');
   Future<SoraniAccount> soraniLogout() async => const SoraniAccount();
+  Future<Map<String, dynamic>> sourceAccount(
+    String source, {
+    String command = '',
+    Object? account,
+  }) async => throw AppFailure('当前站源不支持账号操作');
   Future<void> initialize();
   Future<CatalogPage> catalog(
     String source, {
@@ -644,6 +649,20 @@ class NativeRepository extends AppRepository {
       await _call({'action': 'soraniAccount', 'command': 'logout'}),
     );
   }
+
+  @override
+  Future<Map<String, dynamic>> sourceAccount(
+    String source, {
+    String command = '',
+    Object? account,
+  }) async => Map<String, dynamic>.from(
+    await _call({
+      'action': 'sourceAccount',
+      'source': source,
+      'command': command,
+      if (account != null) 'account': account,
+    }),
+  );
 
   Future<Map<String, dynamic>> _call(Map<String, dynamic> input) async {
     try {

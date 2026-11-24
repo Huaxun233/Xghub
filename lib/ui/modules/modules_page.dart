@@ -11,6 +11,7 @@ import '../../local_store.dart';
 import '../../models.dart';
 import '../../source_modules.dart';
 import '../app_scope.dart';
+import '../settings/aigo_account_view.dart';
 import '../settings/settings_rows.dart';
 import 'module_install.dart';
 import '../settings/sorani_account_view.dart';
@@ -1104,6 +1105,8 @@ class _InstalledCard extends StatelessWidget {
       leading: [
         if (!television && module.id == 'sorani' && soraniAccountAvailable())
           SoraniAccountButton(admin: admin, style: _cardButton(colors)),
+        if (!television && module.id == 'aigo' && aigoAccountAvailable())
+          AigoAccountButton(admin: admin, style: _cardButton(colors)),
       ],
       actions: television
           ? const []
@@ -1510,6 +1513,8 @@ class _ModuleMenu extends StatelessWidget {
       actions: [
         if (module.id == 'sorani' && soraniAccountAvailable())
           SoraniAccountButton(admin: admin),
+        if (module.id == 'aigo' && aigoAccountAvailable())
+          AigoAccountButton(admin: admin),
         if (update != null)
           FocusRing(
             radius: 20,
