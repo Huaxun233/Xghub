@@ -109,7 +109,7 @@ func TestCastMetadataEscapesAddress(t *testing.T) {
 }
 
 func TestCastStreamServesLanAddresses(t *testing.T) {
-	stream, err := newNativeStreamServer(&Downloader{})
+	stream, err := newNativeStreamServer(&Downloader{}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}

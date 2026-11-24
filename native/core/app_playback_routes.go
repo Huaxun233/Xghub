@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -26,7 +27,7 @@ func nativePlaybackChoices(media ProviderMedia, quality int) nativePlaybackChoic
 	seen := map[string]bool{}
 	qualities := map[int]bool{}
 	for _, option := range append([]ProviderMedia{media}, media.Variants...) {
-		if !IsProviderHTTPMediaURL(option.URL) {
+		if !IsProviderStreamURL(option.URL) {
 			continue
 		}
 		identity := option.URL + "\x00" + option.Referer + "\x00" + hex.EncodeToString(option.CENCKey) + "\x00" + hex.EncodeToString(option.HLSKey)
@@ -61,7 +62,7 @@ func (engine *nativeEngine) streamServer() (*nativeStreamServer, error) {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
 	if engine.stream == nil {
-		stream, err := newNativeStreamServer(engine.downloader)
+		stream, err := newNativeStreamServer(engine.downloader, engine.cacheDirectory)
 		if err != nil {
 			return nil, err
 		}
@@ -78,9 +79,10 @@ func (engine *nativeEngine) nativeOpenPlayback(ctx context.Context, choice nativ
 		return nativePlan{}, errors.New("该集没有其他可用的播放线路")
 	}
 	media := choice.media[choice.index]
-	if !IsProviderHTTPMediaURL(media.URL) {
+	if !IsProviderStreamURL(media.URL) {
 		return nativePlan{}, errors.New("站源未返回有效的播放地址")
 	}
+	isTorrent := strings.HasPrefix(strings.ToLower(strings.TrimSpace(media.URL)), "magnet:")
 	tokenBytes := make([]byte, 24)
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return nativePlan{}, errors.New("无法初始化播放会话")
@@ -101,7 +103,11 @@ func (engine *nativeEngine) nativeOpenPlayback(ctx context.Context, choice nativ
 	if err != nil {
 		return nativePlan{}, err
 	}
-	plan.URL, choice.streamSession = stream.nativeOpen(choice.source, media)
+	if isTorrent {
+		plan.URL, choice.streamSession = stream.nativeOpenTorrent(choice.source, media, engine.cacheDirectory)
+	} else {
+		plan.URL, choice.streamSession = stream.nativeOpen(choice.source, media)
+	}
 	choice.created = time.Now()
 	engine.mu.Lock()
 	if engine.playbacks == nil {

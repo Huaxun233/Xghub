@@ -300,6 +300,16 @@ func IsProviderHTTPMediaURL(raw string) bool {
 	return err == nil && (parsed.Scheme == "http" || parsed.Scheme == "https") && parsed.Hostname() != "" && parsed.User == nil
 }
 
+// IsProviderStreamURL additionally accepts magnet URIs, which the native
+// torrent engine turns into a local progressive HTTP stream.
+func IsProviderStreamURL(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if strings.HasPrefix(strings.ToLower(trimmed), "magnet:") {
+		return true
+	}
+	return IsProviderHTTPMediaURL(trimmed)
+}
+
 func ProviderReleaseDate(value string) string {
 	value = strings.TrimSpace(value)
 	if stamp, err := time.Parse(time.RFC3339Nano, value); err == nil {

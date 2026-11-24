@@ -48,14 +48,15 @@ type nativeStreamSession struct {
 }
 
 type nativeStreamServer struct {
-	mu         sync.Mutex
-	downloader *Downloader
-	address    string
-	sessions   map[string]*nativeStreamSession
-	server     *http.Server
-	lan        *http.Server
-	lanPort    int
-	lanListen  string
+	mu             sync.Mutex
+	downloader     *Downloader
+	address        string
+	sessions       map[string]*nativeStreamSession
+	server         *http.Server
+	lan            *http.Server
+	lanPort        int
+	lanListen      string
+	cacheDirectory string
 }
 
 func (stream *nativeStreamServer) lanOrigin(device string) (string, error) {
@@ -120,12 +121,12 @@ func (stream *nativeStreamServer) nativeRequest(request *http.Request) (*http.Re
 
 var nativePlaylistURI = regexp.MustCompile(`URI="([^"]+)"`)
 
-func newNativeStreamServer(d *Downloader) (*nativeStreamServer, error) {
+func newNativeStreamServer(d *Downloader, cacheDirectory string) (*nativeStreamServer, error) {
 	listener, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {
 		return nil, errors.New("无法初始化本机播放器")
 	}
-	stream := &nativeStreamServer{downloader: d, address: "http://" + listener.Addr().String(), lanListen: ":0", sessions: map[string]*nativeStreamSession{}}
+	stream := &nativeStreamServer{downloader: d, address: "http://" + listener.Addr().String(), lanListen: ":0", sessions: map[string]*nativeStreamSession{}, cacheDirectory: cacheDirectory}
 	server := &http.Server{Handler: http.HandlerFunc(stream.nativeServe), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16384}
 	stream.server = server
 	go func() { _ = server.Serve(listener) }()
@@ -331,6 +332,10 @@ func (stream *nativeStreamServer) nativeServe(writer http.ResponseWriter, reques
 	stop := context.AfterFunc(session.ctx, cancel)
 	defer stop()
 	writer.Header().Set("Cache-Control", "no-store")
+	if asset.kind == "torrent" {
+		stream.torrentServe(writer, request, session, asset, info)
+		return
+	}
 	if len(asset.data) > 0 && asset.total > int64(len(asset.data)) {
 		if stream.nativeServePrefix(ctx, writer, request, session, asset) {
 			return
