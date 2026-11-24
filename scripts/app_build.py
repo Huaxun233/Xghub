@@ -32,7 +32,7 @@ class AppBuild:
 
     @property
     def linker_flags(self):
-        flags = '-s -w'
+        flags = '-s -w -checklinkname=0'
         update_server = os.environ.get('UPDATE_SERVER_URL', '').strip()
         if update_server:
             flags += ' -X duanjuapp/native/core.nativeUpdateServer=' + update_server
