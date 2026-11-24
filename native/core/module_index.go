@@ -24,11 +24,17 @@ var (
 	moduleIndexAddresses = []string{
 		"https://raw.githubusercontent.com/guoapp-modules/index/main/index.json",
 		"https://cdn.jsdelivr.net/gh/guoapp-modules/index@main/index.json",
+		// 网络封锁（直连与镜像都被重置）时的自托管代理回退。
+		githubProxyBase + "guoapp-modules/index/main/index.json",
 	}
 	moduleFileAddresses = []string{
 		"https://raw.githubusercontent.com/%s/%s/%s",
 		"https://cdn.jsdelivr.net/gh/%s@%s/%s",
+		githubProxyBase + "%s/%s/%s",
 	}
+	// githubProxyBase 是自托管的 GitHub raw 代理（Cloudflare Worker），
+	// 作为 raw.githubusercontent.com / cdn.jsdelivr.net 都不可达时的最后一级回退。
+	githubProxyBase = "https://aigo.aokorin.xyz/gh/"
 	moduleIndexRepo = regexp.MustCompile(`^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$`)
 	moduleIndexTag  = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 	moduleIndexHash = regexp.MustCompile(`^[0-9a-f]{64}$`)

@@ -432,6 +432,14 @@ func (engine *nativeEngine) cmsSites(ctx context.Context, address string) ([]cms
 		}
 	}
 	if err != nil {
+		// 镜像也不可达（网络封锁重置连接）时走自托管代理。
+		if proxied := cmsWorkerProxy(parsed.String()); proxied != "" {
+			if raw2, err2 := engine.fetchLimited(ctx, proxied, cmsConfigBytes); err2 == nil {
+				raw, err = raw2, nil
+			}
+		}
+	}
+	if err != nil {
 		return nil, fmt.Errorf("读取站源配置失败：%w", err)
 	}
 	sites := parseTVBoxSites(raw)
@@ -462,6 +470,25 @@ func cmsJsdelivrMirror(raw string) string {
 		return ""
 	}
 	return "https://cdn.jsdelivr.net/gh/" + owner + "/" + repo + "@" + branch + "/" + rest
+}
+
+// cmsWorkerProxy 把 raw.githubusercontent.com 地址映射到自托管代理
+// （githubProxyBase，Cloudflare Worker），jsDelivr 镜像也不可达时的最后一级回退。
+// 只处理 /{owner}/{repo}/{branch}/{path…} 形式。
+func cmsWorkerProxy(raw string) string {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Hostname() != "raw.githubusercontent.com" {
+		return ""
+	}
+	parts := strings.SplitN(strings.TrimPrefix(parsed.Path, "/"), "/", 4)
+	if len(parts) < 4 {
+		return ""
+	}
+	owner, repo, branch, rest := parts[0], parts[1], parts[2], parts[3]
+	if owner == "" || repo == "" || branch == "" || rest == "" {
+		return ""
+	}
+	return githubProxyBase + owner + "/" + repo + "/" + branch + "/" + rest
 }
 
 func (engine *nativeEngine) cmsProbe(ctx context.Context, address string) (map[string]any, error) {
