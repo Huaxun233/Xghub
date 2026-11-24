@@ -14,7 +14,7 @@ env:
   GOSUMDB: sum.golang.org
   UPDATE_SERVER_URL: ${{ vars.UPDATE_SERVER_URL }}
   PACKAGE_NAME: ${{ vars.PACKAGE_NAME }}
-  BUNDLED_MODULES: bundled-modules/aigo
+  BUNDLED_MODULES: bundled-modules/aigo,bundled-modules/kanju,bundled-modules/animegarden
   PYTHONUTF8: '1'
   PROJECT_URL: ${{ vars.PROJECT_URL }}
   TELEGRAM_GROUP_URL: ${{ vars.TELEGRAM_GROUP_URL }}
@@ -90,6 +90,16 @@ jobs:
         with:
           repository: Huaxun233/aigo-module
           path: bundled-modules/aigo
+      - &checkout-kanju
+        uses: actions/checkout@v4
+        with:
+          repository: Huaxun233/kanju-module
+          path: bundled-modules/kanju
+      - &checkout-animegarden
+        uses: actions/checkout@v4
+        with:
+          repository: Huaxun233/animegarden-module
+          path: bundled-modules/animegarden
       - &setup-python
         uses: actions/setup-python@v5
         with:
@@ -164,6 +174,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - *checkout-aigo
+      - *checkout-kanju
+      - *checkout-animegarden
       - *setup-go
       - *setup-python
       - *setup-flutter
@@ -196,6 +208,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - *checkout-aigo
+      - *checkout-kanju
+      - *checkout-animegarden
       - *setup-python
       - *setup-go
       - *setup-flutter
@@ -230,6 +244,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - *checkout-aigo
+      - *checkout-kanju
+      - *checkout-animegarden
       - *setup-python
       - *setup-go
       - *setup-flutter
@@ -278,7 +294,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > notes.md <<EOF
-          版本 ${VERSION}。安装包内置爱果站源，其余站源在 设置 › 站源 › 模块管理 的模块商店安装。
+          版本 ${VERSION}。安装包内置爱果、看剧、AnimeGarden 站源，其余站源在 设置 › 站源 › 模块管理 的模块商店安装。
 
           Android：
           - *-arm64-v8a.apk：适用于较新的安卓设备

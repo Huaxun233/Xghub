@@ -5,7 +5,7 @@ permissions:
   contents: read
 env:
   PACKAGE_NAME: xyz.aokorin.xghub
-  BUNDLED_MODULES: bundled-modules/aigo
+  BUNDLED_MODULES: bundled-modules/aigo,bundled-modules/kanju,bundled-modules/animegarden
   PYTHONUTF8: '1'
 jobs:
   android:
@@ -17,6 +17,14 @@ jobs:
         with:
           repository: Huaxun233/aigo-module
           path: bundled-modules/aigo
+      - uses: actions/checkout@v4
+        with:
+          repository: Huaxun233/kanju-module
+          path: bundled-modules/kanju
+      - uses: actions/checkout@v4
+        with:
+          repository: Huaxun233/animegarden-module
+          path: bundled-modules/animegarden
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
