@@ -1,7 +1,6 @@
-name: duanju_app
-description: 独立运行的多端短剧应用
-publish_to: none
-version: 2.3.2+131
+﻿name: duanju_app
+description: 鐙珛杩愯鐨勫绔煭鍓у簲鐢?publish_to: none
+version: 2.3.2+132
 
 environment:
   sdk: '>=3.12.0 <4.0.0'
